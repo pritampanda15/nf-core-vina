@@ -1,0 +1,16 @@
+repository_type: pipeline
+
+nf_core_version: 3.5.1
+
+lint: {}
+
+template:
+  org: nf-core
+  name: vina
+  description: High-throughput, containerized molecular docking using AutoDock Vina
+    with modern ligand and receptor preparation
+  author: Pritam Kumar Panda
+  version: 1.0.0dev
+  force: true
+  outdir: .
+  is_nfcore: true
