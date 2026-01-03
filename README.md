@@ -23,6 +23,8 @@
 
 **nf-core/vina** is a high-throughput, containerized molecular docking pipeline using **AutoDock Vina** with modern ligand and receptor preparation tools. It is designed for structure-based virtual screening campaigns in drug discovery.
 
+![workflow](docs/images/nf-core-vina.png)
+
 ### Key Features
 
 - **Modern toolchain only** - No legacy Python 2.7 dependencies or AutoDockTools
