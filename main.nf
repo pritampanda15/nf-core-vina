@@ -18,18 +18,6 @@
 include { VINA  } from './workflows/vina'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_vina_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vina_pipeline'
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_vina_pipeline'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    GENOME PARAMETER VALUES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-// TODO nf-core: Remove this line if you don't need a FASTA file
-//   This is an example of how to use getGenomeAttribute() to fetch parameters
-//   from igenomes.config using `--genome`
-params.fasta = getGenomeAttribute('fasta')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,19 +31,25 @@ params.fasta = getGenomeAttribute('fasta')
 workflow NFCORE_VINA {
 
     take:
-    samplesheet // channel: samplesheet read in from --input
+    samplesheet // channel: [ val(meta), path(receptor), path(ligand) ]
 
     main:
 
     //
-    // WORKFLOW: Run pipeline
+    // WORKFLOW: Run molecular docking pipeline
     //
     VINA (
         samplesheet
     )
+
     emit:
-    multiqc_report = VINA.out.multiqc_report // channel: /path/to/multiqc_report.html
+    poses          = VINA.out.poses           // channel: [ val(meta), path(pdbqt) ]
+    scores         = VINA.out.scores          // channel: [ val(meta), path(csv) ]
+    all_scores     = VINA.out.all_scores      // channel: path(csv)
+    best_scores    = VINA.out.best_scores     // channel: path(csv)
+    multiqc_report = VINA.out.multiqc_report  // channel: /path/to/multiqc_report.html
 }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -86,6 +80,7 @@ workflow {
     NFCORE_VINA (
         PIPELINE_INITIALISATION.out.samplesheet
     )
+
     //
     // SUBWORKFLOW: Run completion tasks
     //

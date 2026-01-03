@@ -1,0 +1,13 @@
+Docking Summary for test_aspirin
+==================================================
+
+Best binding affinity: 4.10 kcal/mol
+Number of poses: 3
+
+All poses:
+--------------------------------------------------
+ Mode     Affinity    RMSD_LB    RMSD_UB
+--------------------------------------------------
+    1         4.10       0.00       0.00
+    2         5.20       1.95       3.09
+    3         5.90       0.83       3.66

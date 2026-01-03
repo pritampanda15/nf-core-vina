@@ -13,21 +13,51 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
-            "fastq_1": {
+            "receptor": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.(pdb|PDB)$",
+                "errorMessage": "Receptor file must be provided, cannot contain spaces, and must have extension '.pdb'"
             },
-            "fastq_2": {
+            "ligand": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.(sdf|SDF|mol|MOL|mol2|MOL2|pdb|PDB|smi|SMI|smiles|SMILES)$",
+                "errorMessage": "Ligand file must be provided, cannot contain spaces, and must have extension '.sdf', '.mol', '.mol2', '.pdb', '.smi', or '.smiles'"
+            },
+            "center_x": {
+                "type": "number",
+                "errorMessage": "Center X coordinate must be a number",
+                "meta": ["center_x"]
+            },
+            "center_y": {
+                "type": "number",
+                "errorMessage": "Center Y coordinate must be a number",
+                "meta": ["center_y"]
+            },
+            "center_z": {
+                "type": "number",
+                "errorMessage": "Center Z coordinate must be a number",
+                "meta": ["center_z"]
+            },
+            "size_x": {
+                "type": "number",
+                "errorMessage": "Box size X must be a number",
+                "meta": ["size_x"]
+            },
+            "size_y": {
+                "type": "number",
+                "errorMessage": "Box size Y must be a number",
+                "meta": ["size_y"]
+            },
+            "size_z": {
+                "type": "number",
+                "errorMessage": "Box size Z must be a number",
+                "meta": ["size_z"]
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["sample", "receptor", "ligand"]
     }
 }

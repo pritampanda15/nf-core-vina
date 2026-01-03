@@ -19,8 +19,8 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/vina/usage#samplesheet-input).",
+                    "description": "Path to comma-separated file containing information about the docking jobs.",
+                    "help_text": "You will need to create a samplesheet with information about receptor-ligand pairs before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with at minimum 3 columns (sample, receptor, ligand), and a header row. Optional columns include center_x, center_y, center_z, size_x, size_y, size_z for per-sample docking box definitions. See [usage docs](https://nf-co.re/vina/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -43,42 +43,154 @@
                 }
             }
         },
-        "reference_genome_options": {
-            "title": "Reference genome options",
+        "docking_box_options": {
+            "title": "Docking box options",
             "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Reference genome related files and options required for the workflow.",
+            "fa_icon": "fas fa-cube",
+            "description": "Define the search space for molecular docking. These are global defaults that can be overridden per-sample in the samplesheet.",
             "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
+                "center_x": {
+                    "type": "number",
+                    "description": "X coordinate of the docking box center (Angstroms).",
+                    "fa_icon": "fas fa-arrows-alt-h",
+                    "help_text": "The X coordinate of the center of the search space. This can also be specified per-sample in the samplesheet."
                 },
-                "fasta": {
+                "center_y": {
+                    "type": "number",
+                    "description": "Y coordinate of the docking box center (Angstroms).",
+                    "fa_icon": "fas fa-arrows-alt-v",
+                    "help_text": "The Y coordinate of the center of the search space. This can also be specified per-sample in the samplesheet."
+                },
+                "center_z": {
+                    "type": "number",
+                    "description": "Z coordinate of the docking box center (Angstroms).",
+                    "fa_icon": "fas fa-arrows-alt",
+                    "help_text": "The Z coordinate of the center of the search space. This can also be specified per-sample in the samplesheet."
+                },
+                "size_x": {
+                    "type": "number",
+                    "default": 20,
+                    "description": "Size of the docking box in X dimension (Angstroms).",
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "help_text": "The size of the search space in the X dimension. Default is 20 Angstroms."
+                },
+                "size_y": {
+                    "type": "number",
+                    "default": 20,
+                    "description": "Size of the docking box in Y dimension (Angstroms).",
+                    "fa_icon": "fas fa-ruler-vertical",
+                    "help_text": "The size of the search space in the Y dimension. Default is 20 Angstroms."
+                },
+                "size_z": {
+                    "type": "number",
+                    "default": 20,
+                    "description": "Size of the docking box in Z dimension (Angstroms).",
+                    "fa_icon": "fas fa-ruler",
+                    "help_text": "The size of the search space in the Z dimension. Default is 20 Angstroms."
+                }
+            }
+        },
+        "docking_parameters": {
+            "title": "Docking parameters",
+            "type": "object",
+            "fa_icon": "fas fa-atom",
+            "description": "Parameters controlling the AutoDock Vina docking algorithm.",
+            "properties": {
+                "exhaustiveness": {
+                    "type": "integer",
+                    "default": 8,
+                    "minimum": 1,
+                    "description": "Exhaustiveness of the global search.",
+                    "fa_icon": "fas fa-search",
+                    "help_text": "Higher values increase the probability of finding the global minimum but also increase computation time. Recommended values: 8 for quick screens, 32 for production runs, 64+ for high-accuracy studies."
+                },
+                "num_modes": {
+                    "type": "integer",
+                    "default": 9,
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Maximum number of binding modes to generate.",
+                    "fa_icon": "fas fa-layer-group",
+                    "help_text": "The maximum number of docking poses to output, ranked by binding affinity."
+                },
+                "energy_range": {
+                    "type": "number",
+                    "default": 3,
+                    "minimum": 0,
+                    "description": "Maximum energy difference from the best mode (kcal/mol).",
+                    "fa_icon": "fas fa-bolt",
+                    "help_text": "Poses with binding energy more than this value above the best pose will not be reported."
+                }
+            }
+        },
+        "molecule_preparation": {
+            "title": "Molecule preparation options",
+            "type": "object",
+            "fa_icon": "fas fa-flask",
+            "description": "Parameters for receptor and ligand preparation.",
+            "properties": {
+                "receptor_ph": {
+                    "type": "number",
+                    "default": 7.4,
+                    "minimum": 0,
+                    "maximum": 14,
+                    "description": "pH for receptor protonation.",
+                    "fa_icon": "fas fa-prescription-bottle",
+                    "help_text": "The pH value used to determine the protonation state of ionizable residues in the receptor. Default is physiological pH (7.4)."
+                },
+                "ligand_ph": {
+                    "type": "number",
+                    "default": 7.4,
+                    "minimum": 0,
+                    "maximum": 14,
+                    "description": "pH for ligand protonation.",
+                    "fa_icon": "fas fa-pills",
+                    "help_text": "The pH value used to determine the protonation state of ionizable groups in the ligand. Default is physiological pH (7.4)."
+                },
+                "remove_water": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Remove water molecules from receptor PDB.",
+                    "fa_icon": "fas fa-tint-slash",
+                    "help_text": "Remove water molecules (HOH, WAT, H2O, TIP, SPC, SOL residues) from the receptor structure before preparation. This is recommended for docking."
+                },
+                "remove_heteroatoms": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Remove all heteroatoms from receptor PDB.",
+                    "fa_icon": "fas fa-eraser",
+                    "help_text": "Remove all HETATM records including waters, ligands, ions, and cofactors from the receptor. Use this when you want a clean protein-only structure."
+                }
+            }
+        },
+        "virtual_screening": {
+            "title": "Virtual screening options",
+            "type": "object",
+            "fa_icon": "fas fa-th",
+            "description": "Options for high-throughput virtual screening with multiple receptors and/or ligands.",
+            "properties": {
+                "screening_mode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable virtual screening mode.",
+                    "fa_icon": "fas fa-sitemap",
+                    "help_text": "When enabled, the pipeline generates all combinations of receptors × ligands from the samplesheet. Use this for screening many ligands against one or more targets."
+                },
+                "ligand_library": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code"
+                    "description": "Path to multi-molecule SDF file for virtual screening.",
+                    "fa_icon": "fas fa-database",
+                    "help_text": "A single SDF file containing multiple ligand molecules for virtual screening. Each molecule will be extracted and docked against all receptors."
                 },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "igenomes_base": {
+                "receptor_list": {
                     "type": "string",
-                    "format": "directory-path",
-                    "description": "The base path to the igenomes reference files",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "default": "s3://ngi-igenomes/igenomes/"
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Path to file listing receptor PDB files.",
+                    "fa_icon": "fas fa-list",
+                    "help_text": "A text file with one receptor PDB path per line. All ligands will be docked against all receptors in this list."
                 }
             }
         },
@@ -245,7 +357,16 @@
             "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/$defs/reference_genome_options"
+            "$ref": "#/$defs/docking_box_options"
+        },
+        {
+            "$ref": "#/$defs/docking_parameters"
+        },
+        {
+            "$ref": "#/$defs/molecule_preparation"
+        },
+        {
+            "$ref": "#/$defs/virtual_screening"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

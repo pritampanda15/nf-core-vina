@@ -1,0 +1,56 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/vina/master/assets/schema_screening.json",
+    "title": "nf-core/vina virtual screening samplesheet schema",
+    "description": "Schema for virtual screening mode - defines receptors with docking box coordinates",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": ["receptor_id", "receptor", "center_x", "center_y", "center_z"],
+        "properties": {
+            "receptor_id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Receptor ID must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "receptor": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.pdb$",
+                "errorMessage": "Receptor file must be a PDB file and cannot contain spaces"
+            },
+            "center_x": {
+                "type": "number",
+                "errorMessage": "X coordinate of docking box center is required",
+                "meta": ["center_x"]
+            },
+            "center_y": {
+                "type": "number",
+                "errorMessage": "Y coordinate of docking box center is required",
+                "meta": ["center_y"]
+            },
+            "center_z": {
+                "type": "number",
+                "errorMessage": "Z coordinate of docking box center is required",
+                "meta": ["center_z"]
+            },
+            "size_x": {
+                "type": "number",
+                "default": 20,
+                "meta": ["size_x"]
+            },
+            "size_y": {
+                "type": "number",
+                "default": 20,
+                "meta": ["size_y"]
+            },
+            "size_z": {
+                "type": "number",
+                "default": 20,
+                "meta": ["size_z"]
+            }
+        }
+    }
+}

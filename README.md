@@ -21,48 +21,73 @@
 
 ## Introduction
 
-**nf-core/vina** is a bioinformatics pipeline that ...
+**nf-core/vina** is a high-throughput, containerized molecular docking pipeline using **AutoDock Vina** with modern ligand and receptor preparation tools. It is designed for structure-based virtual screening campaigns in drug discovery.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+### Key Features
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+- **Modern toolchain only** - No legacy Python 2.7 dependencies or AutoDockTools
+- **Receptor preparation** using Open Babel (PDB to PDBQT with Gasteiger charges)
+- **Ligand preparation** using Meeko/RDKit (SDF/MOL2/SMILES to PDBQT)
+- **Docking** with AutoDock Vina >= 1.2
+- **Chemically correct** - Proper protonation at specified pH, Gasteiger charges, rotatable bond handling
+- **Fully containerized** - Docker, Singularity, Podman, Conda support
+- **HPC ready** - SLURM, AWS Batch configurations included
+
+### What This Pipeline Does NOT Use
+
+This pipeline explicitly **avoids deprecated tooling**:
+
+- AutoDockTools (ADT) / MGLTools
+- Python 2.7
+- `prepare_ligand4.py`, `prepare_receptor4.py`
+- AutoGrid (grid defined by box coordinates instead)
+
+### Pipeline Summary
+
+1. **Receptor Preparation** - Convert PDB to PDBQT using Open Babel with hydrogen addition and Gasteiger charges
+2. **Ligand Preparation** - Convert SDF/MOL2/SMILES to PDBQT using Meeko/RDKit with proper torsion tree setup
+3. **Molecular Docking** - Run AutoDock Vina with user-defined docking box
+4. **Score Parsing** - Extract binding affinities and generate per-sample CSV reports
+5. **Aggregation** - Combine all results into summary tables
+6. **Reporting** - Generate MultiQC HTML report with docking results
 
 ## Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
-First, prepare a samplesheet with your input data that looks as follows:
+First, prepare a samplesheet with your receptor-ligand pairs:
 
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,receptor,ligand,center_x,center_y,center_z
+dock_1,/path/to/receptor.pdb,/path/to/ligand1.sdf,10.5,20.3,15.0
+dock_2,/path/to/receptor.pdb,/path/to/ligand2.mol2,10.5,20.3,15.0
+dock_3,/path/to/receptor.pdb,/path/to/ligand3.smi,10.5,20.3,15.0
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
+Each row represents a docking job with a receptor-ligand pair and optional docking box coordinates.
 
 Now, you can run the pipeline using:
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+```bash
+nextflow run nf-core/vina \
+   -profile docker \
+   --input samplesheet.csv \
+   --outdir results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0
+```
+
+Or with per-sample box coordinates defined in the samplesheet:
 
 ```bash
 nextflow run nf-core/vina \
-   -profile <docker/singularity/.../institute> \
+   -profile docker \
    --input samplesheet.csv \
-   --outdir <OUTDIR>
+   --outdir results
 ```
 
 > [!WARNING]
@@ -72,17 +97,33 @@ For more details and further functionality, please refer to the [usage documenta
 
 ## Pipeline output
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/vina/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/vina/output).
+The pipeline generates the following outputs:
+
+```
+results/
+├── receptor_prep/          # Prepared receptor PDBQT files
+├── ligand_prep/            # Prepared ligand PDBQT files
+├── docking/                # Docked poses and Vina logs
+├── scores/                 # Per-sample score CSVs
+├── results/                # Aggregated results
+│   ├── docking_results_all.csv       # All poses from all samples
+│   └── docking_results_summary.csv   # Best pose per sample
+├── multiqc/                # MultiQC HTML report
+└── pipeline_info/          # Execution reports
+```
+
+For more details about the output files and reports, please refer to the [output documentation](https://nf-co.re/vina/output).
 
 ## Credits
 
 nf-core/vina was originally written by Pritam Kumar Panda.
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+We thank the following projects and their developers:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+- [AutoDock Vina](https://vina.scripps.edu/) - Scripps Research
+- [Open Babel](https://openbabel.org/) - Open Babel development team
+- [Meeko](https://github.com/forlilab/Meeko) - Forli Lab, Scripps Research
+- [RDKit](https://www.rdkit.org/) - RDKit community
 
 ## Contributions and Support
 
@@ -91,11 +132,6 @@ If you would like to contribute to this pipeline, please see the [contributing g
 For further information or help, don't hesitate to get in touch on the [Slack `#vina` channel](https://nfcore.slack.com/channels/vina) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/vina for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

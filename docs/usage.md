@@ -6,61 +6,133 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+**nf-core/vina** is a high-throughput molecular docking pipeline using AutoDock Vina with modern ligand and receptor preparation tools. This pipeline is designed for structure-based virtual screening campaigns.
+
+### Important: Modern Toolchain Only
+
+This pipeline uses exclusively modern tools and does **NOT** use:
+
+- AutoDockTools (ADT) / MGLTools
+- Python 2.7
+- `prepare_ligand4.py`, `prepare_receptor4.py`
+- AutoGrid (grid defined by box coordinates instead)
 
 ## Samplesheet input
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
+You will need to create a samplesheet with information about the receptor-ligand pairs you would like to dock before running the pipeline. Use this parameter to specify its location.
 
 ```bash
 --input '[path to samplesheet file]'
 ```
 
-### Multiple runs of the same sample
+### Samplesheet format
 
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
+The samplesheet is a CSV file with the following columns:
+
+| Column     | Required | Description                                      |
+|------------|----------|--------------------------------------------------|
+| `sample`   | Yes      | Unique sample identifier (no spaces)              |
+| `receptor` | Yes      | Path to receptor PDB file                         |
+| `ligand`   | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)   |
+| `center_x` | No       | X coordinate of docking box center (Angstroms)    |
+| `center_y` | No       | Y coordinate of docking box center (Angstroms)    |
+| `center_z` | No       | Z coordinate of docking box center (Angstroms)    |
+| `size_x`   | No       | Box size in X dimension (default: 20 Angstroms)   |
+| `size_y`   | No       | Box size in Y dimension (default: 20 Angstroms)   |
+| `size_z`   | No       | Box size in Z dimension (default: 20 Angstroms)   |
+
+### Minimal samplesheet
+
+If you're using global docking box parameters (via CLI), you only need three columns:
 
 ```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
+sample,receptor,ligand
+dock_1,/path/to/receptor.pdb,/path/to/aspirin.sdf
+dock_2,/path/to/receptor.pdb,/path/to/ibuprofen.mol2
+dock_3,/path/to/receptor.pdb,/path/to/caffeine.smi
 ```
 
-### Full samplesheet
+### Full samplesheet with per-sample box coordinates
 
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
+For different docking boxes per sample:
 
 ```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+sample,receptor,ligand,center_x,center_y,center_z,size_x,size_y,size_z
+dock_1,/path/to/receptor1.pdb,/path/to/ligand1.sdf,10.5,20.3,15.0,20,20,20
+dock_2,/path/to/receptor2.pdb,/path/to/ligand2.mol2,5.2,10.1,8.5,25,25,25
+dock_3,/path/to/receptor1.pdb,/path/to/ligand3.smi,10.5,20.3,15.0,30,30,30
 ```
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+### Supported ligand formats
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+The pipeline supports the following ligand input formats:
+
+- **SDF** (.sdf) - Recommended for prepared ligands
+- **MOL2** (.mol2) - Commonly exported from molecular modeling software
+- **PDB** (.pdb) - Protein Data Bank format
+- **SMILES** (.smi, .smiles) - Will generate 3D coordinates automatically
+
+## Defining the docking box
+
+The docking box (search space) can be defined in two ways:
+
+### Option 1: Global parameters (CLI)
+
+Use command-line parameters to set the same docking box for all samples:
+
+```bash
+nextflow run nf-core/vina \
+   --input samplesheet.csv \
+   --outdir results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0 \
+   --size_x 20 \
+   --size_y 20 \
+   --size_z 20
+```
+
+### Option 2: Per-sample in samplesheet
+
+Define docking box coordinates in the samplesheet for each sample. This is useful when docking to different binding sites or receptors.
+
+Per-sample values override global parameters.
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/vina --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run nf-core/vina \
+   --input ./samplesheet.csv \
+   --outdir ./results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0 \
+   -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
+
+### Example with all docking parameters
+
+```bash
+nextflow run nf-core/vina \
+   --input ./samplesheet.csv \
+   --outdir ./results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0 \
+   --size_x 25 \
+   --size_y 25 \
+   --size_z 25 \
+   --exhaustiveness 32 \
+   --num_modes 9 \
+   --energy_range 3 \
+   --receptor_ph 7.4 \
+   --ligand_ph 7.4 \
+   -profile docker
+```
 
 Note that the pipeline will create the following files in your working directory:
 
@@ -89,32 +161,164 @@ with:
 ```yaml title="params.yaml"
 input: './samplesheet.csv'
 outdir: './results/'
-genome: 'GRCh37'
-<...>
+center_x: 10.5
+center_y: 20.3
+center_z: 15.0
+size_x: 25
+size_y: 25
+size_z: 25
+exhaustiveness: 32
+num_modes: 9
+energy_range: 3
+receptor_ph: 7.4
+ligand_ph: 7.4
 ```
 
 You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
 
-### Updating the pipeline
+## Docking parameters explained
 
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
+### Exhaustiveness
 
-```bash
-nextflow pull nf-core/vina
+The `exhaustiveness` parameter controls how thoroughly the docking algorithm searches the conformational space:
+
+- **8** (default): Quick screening, suitable for initial virtual screening
+- **32**: Production quality, good balance of speed and accuracy
+- **64+**: High accuracy studies, significantly slower but more reliable
+
+Higher values increase the probability of finding the global minimum but also increase computation time proportionally.
+
+### Number of modes
+
+The `num_modes` parameter sets the maximum number of binding poses to output:
+
+- Each pose is ranked by predicted binding affinity
+- Output is limited to poses within `energy_range` of the best pose
+- Default is 9 poses
+
+### Energy range
+
+The `energy_range` parameter (in kcal/mol) filters poses:
+
+- Only poses within this energy difference from the best pose are reported
+- Default is 3 kcal/mol
+- Increase for more pose diversity
+
+## Virtual Screening Mode
+
+For high-throughput virtual screening with many ligands against one or more receptors, use the **screening mode**.
+
+### Concept
+
+In screening mode, the pipeline:
+1. Prepares each unique receptor once
+2. Splits your ligand library (multi-molecule SDF file) into individual molecules
+3. Automatically creates all receptor × ligand docking combinations
+4. Efficiently parallelizes thousands of docking jobs
+
+This is ideal for screening compound libraries (1000s of ligands) against protein targets.
+
+### Samplesheet for Screening Mode
+
+Create a simpler samplesheet with just the receptor(s) and docking box coordinates:
+
+```csv title="screening_samplesheet.csv"
+sample,receptor,ligand,center_x,center_y,center_z,size_x,size_y,size_z
+1HSG_pocket,receptors/1HSG.pdb,dummy.sdf,16.0,25.0,4.0,20,20,20
+2RH1_pocket,receptors/2RH1.pdb,dummy.sdf,10.5,15.2,20.3,25,25,25
 ```
 
-### Reproducibility
+Note: The `ligand` column can contain any placeholder file (e.g., `dummy.sdf`) in screening mode as ligands come from the library file.
 
-It is a good idea to specify the pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
+### Running Virtual Screening
 
-First, go to the [nf-core/vina releases page](https://github.com/nf-core/vina/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+```bash
+nextflow run nf-core/vina \
+   --input screening_samplesheet.csv \
+   --outdir results \
+   --screening_mode true \
+   --ligand_library /path/to/compound_library.sdf \
+   -profile docker
+```
 
-This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
+### Example: 1000 Ligands × 2 Receptors
 
-To further assist in reproducibility, you can use share and reuse [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
+Given a ligand library with 1000 compounds and 2 receptors in the samplesheet, the pipeline will:
+- Prepare 2 receptors (once each)
+- Prepare 1000 ligands
+- Run 2000 docking jobs (1000 × 2)
+- Aggregate all results into ranked score tables
 
-> [!TIP]
-> If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
+### Preparing Ligand Libraries
+
+Your compound library should be a multi-molecule SDF file. Tools like RDKit or Open Babel can combine individual molecules:
+
+```python
+from rdkit import Chem
+
+writer = Chem.SDWriter('library.sdf')
+for smiles in smiles_list:
+    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol)
+    writer.write(mol)
+writer.close()
+```
+
+Or using Open Babel:
+```bash
+obabel *.sdf -O combined_library.sdf
+```
+
+## Receptor Preparation Options
+
+### Water Removal (Default: ON)
+
+By default, the pipeline removes water molecules (HOH, WAT, H2O, etc.) from receptor PDB files:
+
+```bash
+--remove_water true   # Default - removes water molecules
+--remove_water false  # Keep water molecules
+```
+
+### Heteroatom Removal
+
+To remove ALL heteroatoms including waters, ligands, ions, and cofactors:
+
+```bash
+--remove_heteroatoms true  # Remove all HETATM records
+```
+
+Use this when you want a clean protein-only structure for blind docking.
+
+## HPC and Cloud execution
+
+### SLURM clusters
+
+Use the provided SLURM profile:
+
+```bash
+nextflow run nf-core/vina \
+   --input samplesheet.csv \
+   --outdir results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0 \
+   -profile singularity,slurm
+```
+
+### AWS Batch
+
+```bash
+nextflow run nf-core/vina \
+   --input s3://bucket/samplesheet.csv \
+   --outdir s3://bucket/results \
+   --center_x 10.5 \
+   --center_y 20.3 \
+   --center_z 15.0 \
+   -profile awsbatch \
+   -work-dir s3://bucket/work
+```
 
 ## Core Nextflow arguments
 
@@ -130,79 +334,23 @@ Several generic profiles are bundled with the pipeline which instruct the pipeli
 > [!IMPORTANT]
 > We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
 
-The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to check if your system is supported, please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
+Available profiles:
 
-Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
-They are loaded in sequence, so later profiles can overwrite earlier profiles.
-
-If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended, since it can lead to different results on different machines dependent on the computer environment.
-
-- `test`
-  - A profile with a complete configuration for automated testing
-  - Includes links to test data so needs no other parameters
-- `docker`
-  - A generic configuration profile to be used with [Docker](https://docker.com/)
-- `singularity`
-  - A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
-- `podman`
-  - A generic configuration profile to be used with [Podman](https://podman.io/)
-- `shifter`
-  - A generic configuration profile to be used with [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/)
-- `charliecloud`
-  - A generic configuration profile to be used with [Charliecloud](https://charliecloud.io/)
-- `apptainer`
-  - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
-- `wave`
-  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow ` 24.03.0-edge` or later).
-- `conda`
-  - A generic configuration profile to be used with [Conda](https://conda.io/docs/). Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter, Charliecloud, or Apptainer.
+- `docker` - Use Docker containers
+- `singularity` - Use Singularity containers
+- `podman` - Use Podman containers
+- `conda` - Use Conda environments
+- `slurm` - Use SLURM scheduler
+- `awsbatch` - Use AWS Batch
+- `test` - Run with test data
 
 ### `-resume`
 
-Specify this when restarting a pipeline. Nextflow will use cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously. For input to be considered the same, not only the names must be identical but the files' contents as well. For more info about this parameter, see [this blog post](https://www.nextflow.io/blog/2019/demystifying-nextflow-resume.html).
+Specify this when restarting a pipeline. Nextflow will use cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously.
 
-You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
-
-### `-c`
-
-Specify the path to a specific config file (this is a core Nextflow command). See the [nf-core website documentation](https://nf-co.re/usage/configuration) for more information.
-
-## Custom configuration
-
-### Resource requests
-
-Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the pipeline steps, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher resources request (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
-
-To change the resource requests, please see the [max resources](https://nf-co.re/docs/usage/configuration#max-resources) and [tuning workflow resources](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources) section of the nf-core website.
-
-### Custom Containers
-
-In some cases, you may wish to change the container or conda environment used by a pipeline steps for a particular tool. By default, nf-core pipelines use containers and software from the [biocontainers](https://biocontainers.pro/) or [bioconda](https://bioconda.github.io/) projects. However, in some cases the pipeline specified version maybe out of date.
-
-To use a different container from the default container or conda environment specified in a pipeline, please see the [updating tool versions](https://nf-co.re/docs/usage/configuration#updating-tool-versions) section of the nf-core website.
-
-### Custom Tool Arguments
-
-A pipeline might not always support every possible argument or option of a particular tool used in pipeline. Fortunately, nf-core pipelines provide some freedom to users to insert additional parameters that the pipeline does not include by default.
-
-To learn how to provide additional arguments to a particular tool of the pipeline, please see the [customising tool arguments](https://nf-co.re/docs/usage/configuration#customising-tool-arguments) section of the nf-core website.
-
-### nf-core/configs
-
-In most cases, you will only need to create a custom config as a one-off but if you and others within your organisation are likely to be running nf-core pipelines regularly and need to use the same settings regularly it may be a good idea to request that your custom config file is uploaded to the `nf-core/configs` git repository. Before you do this please can you test that the config file works with your pipeline of choice using the `-c` parameter. You can then create a pull request to the `nf-core/configs` repository with the addition of your config file, associated documentation file (see examples in [`nf-core/configs/docs`](https://github.com/nf-core/configs/tree/master/docs)), and amending [`nfcore_custom.config`](https://github.com/nf-core/configs/blob/master/nfcore_custom.config) to include your custom profile.
-
-See the main [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for more information about creating your own configuration files.
-
-If you have any questions or issues please send us a message on [Slack](https://nf-co.re/join/slack) on the [`#configs` channel](https://nfcore.slack.com/channels/configs).
-
-## Running in the background
-
-Nextflow handles job submissions and supervises the running jobs. The Nextflow process must run until the pipeline is finished.
-
-The Nextflow `-bg` flag launches Nextflow in the background, detached from your terminal so that the workflow does not stop if you log out of your session. The logs are saved to a file.
-
-Alternatively, you can use `screen` / `tmux` or similar tool to create a detached session which you can log back into at a later time.
-Some HPC setups also allow you to run nextflow within a cluster job submitted your job scheduler (from where it submits more jobs).
+```bash
+nextflow run nf-core/vina -resume
+```
 
 ## Nextflow memory requirements
 

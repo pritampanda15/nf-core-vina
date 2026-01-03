@@ -1,0 +1,7 @@
+Sample	meeko	rdkit	openbabel	python	autodock-vina	nf-core/vina	Nextflow
+LIGAND_PREP	0.6.0-alpha.2	2023.09.4					
+RECEPTOR_PREP			No input file or format spec or possibly a misplaced option.				
+SCORE_AGGREGATE				3.11.10			
+VINA_DOCK					1.1.2		
+VINA_PARSE				3.11.10			
+Workflow						v1.0.0dev	25.10.2

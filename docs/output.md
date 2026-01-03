@@ -2,32 +2,124 @@
 
 ## Introduction
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
+This document describes the output produced by the pipeline. Most of the results are molecular docking outputs from AutoDock Vina, with an aggregated summary in the MultiQC report.
 
 The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
-
-<!-- TODO nf-core: Write this documentation describing your workflow's output -->
 
 ## Pipeline overview
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
-- [FastQC](#fastqc) - Raw read QC
-- [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
+- [Receptor Preparation](#receptor-preparation) - Convert receptor PDB to PDBQT
+- [Ligand Preparation](#ligand-preparation) - Convert ligand to PDBQT
+- [Molecular Docking](#molecular-docking) - AutoDock Vina docking
+- [Score Parsing](#score-parsing) - Extract binding affinities
+- [Aggregated Results](#aggregated-results) - Combined results from all samples
+- [MultiQC](#multiqc) - Aggregate report with docking summary
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
-### FastQC
+### Receptor Preparation
 
 <details markdown="1">
 <summary>Output files</summary>
 
-- `fastqc/`
-  - `*_fastqc.html`: FastQC report containing quality metrics.
-  - `*_fastqc.zip`: Zip archive containing the FastQC report, tab-delimited data file and plot images.
+- `receptor_prep/`
+  - `*_receptor.pdbqt`: Prepared receptor files in PDBQT format with Gasteiger charges and hydrogens added at specified pH.
 
 </details>
 
-[FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences. For further reading and documentation see the [FastQC help pages](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
+The receptor preparation step uses Open Babel to convert PDB files to PDBQT format. This includes:
+
+- Adding hydrogen atoms at the specified pH (default: 7.4)
+- Computing Gasteiger partial charges
+- Converting to AutoDock PDBQT format
+
+### Ligand Preparation
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `ligand_prep/`
+  - `*_ligand.pdbqt`: Prepared ligand files in PDBQT format with proper torsion tree setup.
+
+</details>
+
+The ligand preparation step uses Meeko (RDKit-based) to convert various ligand formats to PDBQT:
+
+- Supports SDF, MOL2, PDB, and SMILES input formats
+- 3D coordinate generation for SMILES (if needed)
+- Proper rotatable bond detection
+- Torsion tree setup for flexible docking
+
+### Molecular Docking
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `docking/`
+  - `*_docked.pdbqt`: Docked ligand poses in PDBQT format, ranked by binding affinity.
+  - `*_vina.log`: AutoDock Vina log file with docking scores and RMSD values.
+
+</details>
+
+The docking step runs AutoDock Vina with the prepared receptor and ligand files. Output includes:
+
+- Multiple docked poses (up to `num_modes` poses)
+- Binding affinity predictions (kcal/mol) - more negative = stronger binding
+- RMSD values for pose clustering
+
+#### Interpreting Docking Scores
+
+| Affinity (kcal/mol) | Interpretation |
+|---------------------|----------------|
+| < -10               | Very strong binding |
+| -10 to -8           | Strong binding |
+| -8 to -6            | Moderate binding |
+| -6 to -4            | Weak binding |
+| > -4                | Very weak binding |
+
+### Score Parsing
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `scores/`
+  - `*_scores.csv`: CSV file with all docking poses and their scores for each sample.
+  - `*_summary.txt`: Human-readable summary of docking results.
+
+</details>
+
+The score parsing step extracts binding affinities from Vina output:
+
+**CSV format:**
+```csv
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+dock_1,1,-8.5,0.0,0.0
+dock_1,2,-8.2,1.5,2.3
+dock_1,3,-7.9,2.1,3.5
+```
+
+### Aggregated Results
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `results/`
+  - `docking_results_all.csv`: All docking poses from all samples combined.
+  - `docking_results_summary.csv`: Best pose for each sample with summary statistics.
+  - `docking_results_mqc.csv`: MultiQC-compatible summary table.
+
+</details>
+
+The aggregation step combines results from all samples into convenient summary files:
+
+**Summary CSV format:**
+```csv
+sample_id,best_mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound,total_poses
+dock_1,1,-8.5,0.0,0.0,9
+dock_2,1,-7.2,0.0,0.0,9
+dock_3,1,-9.1,0.0,0.0,9
+```
 
 ### MultiQC
 
@@ -35,15 +127,17 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 <summary>Output files</summary>
 
 - `multiqc/`
-  - `multiqc_report.html`: a standalone HTML file that can be viewed in your web browser.
-  - `multiqc_data/`: directory containing parsed statistics from the different tools used in the pipeline.
-  - `multiqc_plots/`: directory containing static images from the report in various formats.
+  - `multiqc_report.html`: A standalone HTML file that can be viewed in your web browser.
+  - `multiqc_data/`: Directory containing parsed statistics from the different tools used in the pipeline.
+  - `multiqc_plots/`: Directory containing static images from the report in various formats.
 
 </details>
 
-[MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.
+[MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarising all samples in your project. The report includes:
 
-Results generated by MultiQC collate pipeline QC from supported tools e.g. FastQC. The pipeline has special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see <http://multiqc.info>.
+- **Docking Results Table**: Summary of best binding affinities per sample
+- **Software Versions**: All tools and versions used in the pipeline
+- **Workflow Summary**: Pipeline parameters and execution details
 
 ### Pipeline information
 
@@ -59,3 +153,37 @@ Results generated by MultiQC collate pipeline QC from supported tools e.g. FastQ
 </details>
 
 [Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
+
+## Output directory structure
+
+```
+results/
+├── receptor_prep/
+│   ├── sample1_receptor.pdbqt
+│   └── sample2_receptor.pdbqt
+├── ligand_prep/
+│   ├── sample1_ligand.pdbqt
+│   └── sample2_ligand.pdbqt
+├── docking/
+│   ├── sample1_docked.pdbqt
+│   ├── sample1_vina.log
+│   ├── sample2_docked.pdbqt
+│   └── sample2_vina.log
+├── scores/
+│   ├── sample1_scores.csv
+│   ├── sample1_summary.txt
+│   ├── sample2_scores.csv
+│   └── sample2_summary.txt
+├── results/
+│   ├── docking_results_all.csv
+│   ├── docking_results_summary.csv
+│   └── docking_results_mqc.csv
+├── multiqc/
+│   ├── multiqc_report.html
+│   └── multiqc_data/
+└── pipeline_info/
+    ├── execution_report.html
+    ├── execution_timeline.html
+    ├── execution_trace.txt
+    └── software_versions.yml
+```

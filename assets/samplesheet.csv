@@ -1,3 +1,4 @@
-sample,fastq_1,fastq_2
-SAMPLE_PAIRED_END,/path/to/fastq/files/AEG588A1_S1_L002_R1_001.fastq.gz,/path/to/fastq/files/AEG588A1_S1_L002_R2_001.fastq.gz
-SAMPLE_SINGLE_END,/path/to/fastq/files/AEG588A4_S4_L003_R1_001.fastq.gz,
+sample,receptor,ligand,center_x,center_y,center_z,size_x,size_y,size_z
+dock_aspirin,/path/to/receptor.pdb,/path/to/aspirin.sdf,10.5,20.3,15.0,20,20,20
+dock_ibuprofen,/path/to/receptor.pdb,/path/to/ibuprofen.mol2,10.5,20.3,15.0,20,20,20
+dock_caffeine,/path/to/receptor.pdb,/path/to/caffeine.smi,10.5,20.3,15.0,20,20,20
