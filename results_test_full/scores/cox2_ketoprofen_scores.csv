@@ -1,0 +1,10 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_ketoprofen,1,-8.1,0.0,0.0
+cox2_ketoprofen,2,-7.8,1.833,2.744
+cox2_ketoprofen,3,-7.7,1.99,2.986
+cox2_ketoprofen,4,-7.5,1.758,2.303
+cox2_ketoprofen,5,-7.5,1.9,2.895
+cox2_ketoprofen,6,-7.5,2.116,3.027
+cox2_ketoprofen,7,-7.4,2.196,3.24
+cox2_ketoprofen,8,-7.4,2.476,3.649
+cox2_ketoprofen,9,-7.2,1.892,6.429

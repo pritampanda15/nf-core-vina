@@ -194,6 +194,35 @@
                 }
             }
         },
+        "binding_site_detection": {
+            "title": "Binding site detection options",
+            "type": "object",
+            "fa_icon": "fas fa-crosshairs",
+            "description": "Options for automatic binding site detection from co-crystallized ligands.",
+            "properties": {
+                "auto_binding_site": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Auto-detect binding site from co-crystallized ligand.",
+                    "fa_icon": "fas fa-magic",
+                    "help_text": "When enabled, the pipeline automatically detects the docking box center and size from co-crystallized ligands in the receptor PDB file. This is useful when the receptor comes from an X-ray co-crystal structure."
+                },
+                "ligand_id": {
+                    "type": "string",
+                    "description": "Specific ligand residue name to use for binding site detection.",
+                    "fa_icon": "fas fa-tag",
+                    "help_text": "If the PDB contains multiple ligands, specify the 3-letter residue name (e.g., 'MK1', 'ATP') to use for binding site detection. If not specified, the largest ligand will be used."
+                },
+                "box_padding": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 0,
+                    "description": "Padding around the ligand for box size (Angstroms).",
+                    "fa_icon": "fas fa-expand",
+                    "help_text": "The padding in Angstroms to add around the co-crystallized ligand when calculating the docking box size. Default is 5 Angstroms on each side."
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -367,6 +396,9 @@
         },
         {
             "$ref": "#/$defs/virtual_screening"
+        },
+        {
+            "$ref": "#/$defs/binding_site_detection"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

@@ -1,4 +1,0 @@
-sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
-test_aspirin,1,4.1,0.0,0.0
-test_aspirin,2,5.2,1.953,3.094
-test_aspirin,3,5.9,0.834,3.662

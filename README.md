@@ -26,8 +26,11 @@
 ### Key Features
 
 - **Modern toolchain only** - No legacy Python 2.7 dependencies or AutoDockTools
-- **Receptor preparation** using Open Babel (PDB to PDBQT with Gasteiger charges)
+- **Receptor preparation** using Open Babel (PDB to PDBQT with polar hydrogens and Gasteiger charges)
 - **Ligand preparation** using Meeko/RDKit (SDF/MOL2/SMILES to PDBQT)
+- **Virtual screening mode** - Screen thousands of ligands against multiple receptors efficiently
+- **Multi-molecule SDF support** - Automatically split and process compound libraries
+- **Auto binding site detection** - Automatically detect docking box from co-crystallized ligands in PDB
 - **Docking** with AutoDock Vina >= 1.2
 - **Chemically correct** - Proper protonation at specified pH, Gasteiger charges, rotatable bond handling
 - **Fully containerized** - Docker, Singularity, Podman, Conda support
@@ -44,12 +47,59 @@ This pipeline explicitly **avoids deprecated tooling**:
 
 ### Pipeline Summary
 
-1. **Receptor Preparation** - Convert PDB to PDBQT using Open Babel with hydrogen addition and Gasteiger charges
-2. **Ligand Preparation** - Convert SDF/MOL2/SMILES to PDBQT using Meeko/RDKit with proper torsion tree setup
-3. **Molecular Docking** - Run AutoDock Vina with user-defined docking box
-4. **Score Parsing** - Extract binding affinities and generate per-sample CSV reports
-5. **Aggregation** - Combine all results into summary tables
-6. **Reporting** - Generate MultiQC HTML report with docking results
+1. **Binding Site Detection** (optional) - Auto-detect docking box from co-crystallized ligand in PDB structure
+2. **Receptor Preparation** - Convert PDB to PDBQT using Open Babel with polar hydrogen addition and Gasteiger charges
+3. **Ligand Preparation** - Convert SDF/MOL2/SMILES to PDBQT using Meeko/RDKit with proper torsion tree setup
+4. **Library Splitting** (virtual screening) - Split multi-molecule SDF files into individual ligands
+5. **Molecular Docking** - Run AutoDock Vina with user-defined or auto-detected docking box
+6. **Score Parsing** - Extract binding affinities and generate per-sample CSV reports
+7. **Aggregation** - Combine all results into summary tables ranked by affinity
+8. **Reporting** - Generate MultiQC HTML report with docking results
+
+### Pipeline Diagram
+
+```mermaid
+flowchart LR
+    subgraph Input[" "]
+        A[/"Samplesheet"/]
+        B[/"Receptor (PDB)"/]
+        C[/"Ligand (SDF)"/]
+    end
+
+    subgraph Prep["Preparation"]
+        D{{"BINDING_SITE"}}
+        E["RECEPTOR_PREP"]
+        F["LIGAND_PREP"]
+    end
+
+    subgraph Dock["Docking"]
+        G["VINA_DOCK"]
+    end
+
+    subgraph Analysis["Analysis"]
+        H["VINA_PARSE"]
+        I["SCORE_AGGREGATE"]
+        J["MULTIQC"]
+    end
+
+    subgraph Output[" "]
+        K[/"Poses (PDBQT)"/]
+        L[/"Scores (CSV)"/]
+        M[/"Report (HTML)"/]
+    end
+
+    A --> B & C
+    B -.->|optional| D
+    D -.-> E
+    B --> E
+    C --> F
+    E & F --> G
+    G --> H & K
+    H --> I & L
+    I --> J --> M
+
+    style D stroke:#ef6c00,stroke-dasharray: 5 5
+```
 
 ## Usage
 
@@ -101,6 +151,7 @@ The pipeline generates the following outputs:
 
 ```
 results/
+├── binding_site/           # Auto-detected binding site coordinates (if enabled)
 ├── receptor_prep/          # Prepared receptor PDBQT files
 ├── ligand_prep/            # Prepared ligand PDBQT files
 ├── docking/                # Docked poses and Vina logs

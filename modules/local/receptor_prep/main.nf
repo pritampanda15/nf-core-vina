@@ -43,12 +43,12 @@ process RECEPTOR_PREP {
     echo "Cleaned atoms: \$(grep -c "^\\(ATOM\\|HETATM\\)" cleaned_receptor.pdb || echo 0)"
 
     # Step 2: Convert PDB to PDBQT using Open Babel
-    # Add hydrogens at specified pH, compute Gasteiger charges
+    # Add only polar hydrogens at specified pH, compute Gasteiger charges
+    # Note: -p adds polar hydrogens (for H-bonding), -xr marks as rigid receptor
     obabel \\
         cleaned_receptor.pdb \\
         -O ${prefix}_receptor.pdbqt \\
         -xr \\
-        -h \\
         -p ${ph} \\
         --partialcharge gasteiger \\
         ${args}

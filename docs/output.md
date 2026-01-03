@@ -10,6 +10,7 @@ The directories listed below will be created in the results directory after the 
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
+- [Binding Site Detection](#binding-site-detection) - Auto-detect docking box (optional)
 - [Receptor Preparation](#receptor-preparation) - Convert receptor PDB to PDBQT
 - [Ligand Preparation](#ligand-preparation) - Convert ligand to PDBQT
 - [Molecular Docking](#molecular-docking) - AutoDock Vina docking
@@ -17,6 +18,39 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [Aggregated Results](#aggregated-results) - Combined results from all samples
 - [MultiQC](#multiqc) - Aggregate report with docking summary
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
+
+### Binding Site Detection
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `binding_site/`
+  - `*_binding_site.json`: JSON file containing detected binding site coordinates and box dimensions.
+  - `*_binding_site.txt`: Human-readable summary of the detected binding site.
+
+</details>
+
+When `--auto_binding_site` is enabled, the pipeline automatically detects the docking box from co-crystallized ligands in the receptor PDB file. This step:
+
+- Parses HETATM records from the PDB file
+- Excludes common non-ligand molecules (water, ions, buffers, solvents)
+- Calculates the centroid of the largest ligand as the box center
+- Determines box dimensions based on ligand extent plus padding (default: 5 Å)
+
+**JSON output format:**
+```json
+{
+  "ligand_id": "MK1",
+  "atom_count": 45,
+  "center_x": 13.1,
+  "center_y": 22.5,
+  "center_z": 5.6,
+  "size_x": 25,
+  "size_y": 22,
+  "size_z": 20,
+  "padding": 5
+}
+```
 
 ### Receptor Preparation
 
@@ -158,6 +192,9 @@ dock_3,1,-9.1,0.0,0.0,9
 
 ```
 results/
+├── binding_site/               # Only when --auto_binding_site is enabled
+│   ├── sample1_binding_site.json
+│   └── sample1_binding_site.txt
 ├── receptor_prep/
 │   ├── sample1_receptor.pdbqt
 │   └── sample2_receptor.pdbqt

@@ -12,6 +12,7 @@ include { VINA_DOCK       } from '../../../modules/local/vina_dock/main'
 include { VINA_PARSE      } from '../../../modules/local/vina_parse/main'
 include { SCORE_AGGREGATE } from '../../../modules/local/score_aggregate/main'
 include { SPLIT_SDF       } from '../../../modules/local/split_sdf/main'
+include { BINDING_SITE    } from '../../../modules/local/binding_site/main'
 
 workflow DOCKING {
 
@@ -86,13 +87,60 @@ workflow DOCKING {
         // Each samplesheet row is one docking job
         //
 
+        // Check if auto binding site detection is needed
+        if (params.auto_binding_site) {
+            //
+            // AUTO BINDING SITE DETECTION
+            // Detect binding site from co-crystallized ligand in PDB
+            //
+
+            // Separate samples: those with coordinates vs those needing detection
+            ch_with_coords = ch_samplesheet
+                .filter { meta, receptor, ligand ->
+                    meta.center_x != null && meta.center_y != null && meta.center_z != null
+                }
+
+            ch_need_detection = ch_samplesheet
+                .filter { meta, receptor, ligand ->
+                    meta.center_x == null || meta.center_y == null || meta.center_z == null
+                }
+
+            // Run binding site detection on samples that need it
+            ch_for_detection = ch_need_detection.map { meta, receptor, ligand -> [ meta, receptor ] }
+            BINDING_SITE ( ch_for_detection )
+            ch_versions = ch_versions.mix(BINDING_SITE.out.versions.first().ifEmpty([]))
+
+            // Parse binding site JSON and update meta
+            ch_detected = BINDING_SITE.out.binding_site
+                .join(ch_need_detection.map { meta, receptor, ligand -> [ meta, receptor, ligand ] })
+                .map { meta, json_file, receptor, ligand ->
+                    def json = new groovy.json.JsonSlurper().parse(json_file)
+                    def updated_meta = meta + [
+                        center_x: json.center_x,
+                        center_y: json.center_y,
+                        center_z: json.center_z,
+                        size_x: json.size_x,
+                        size_y: json.size_y,
+                        size_z: json.size_z,
+                        detected_ligand: json.ligand_id
+                    ]
+                    [ updated_meta, receptor, ligand ]
+                }
+
+            // Merge samples with and without detection
+            ch_samplesheet_updated = ch_with_coords.mix(ch_detected)
+
+        } else {
+            ch_samplesheet_updated = ch_samplesheet
+        }
+
         // Prepare receptors
-        ch_receptor = ch_samplesheet.map { meta, receptor, ligand -> [ meta, receptor ] }
+        ch_receptor = ch_samplesheet_updated.map { meta, receptor, ligand -> [ meta, receptor ] }
         RECEPTOR_PREP ( ch_receptor )
         ch_versions = ch_versions.mix(RECEPTOR_PREP.out.versions.first())
 
         // Prepare ligands
-        ch_ligand = ch_samplesheet.map { meta, receptor, ligand -> [ meta, ligand ] }
+        ch_ligand = ch_samplesheet_updated.map { meta, receptor, ligand -> [ meta, ligand ] }
         LIGAND_PREP ( ch_ligand )
         ch_versions = ch_versions.mix(LIGAND_PREP.out.versions.first())
 

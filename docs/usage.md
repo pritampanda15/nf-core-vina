@@ -98,6 +98,50 @@ Define docking box coordinates in the samplesheet for each sample. This is usefu
 
 Per-sample values override global parameters.
 
+### Option 3: Auto-detect from co-crystallized ligand
+
+If your receptor PDB contains a co-crystallized ligand (from X-ray crystallography), the pipeline can automatically detect the binding site:
+
+```bash
+nextflow run nf-core/vina \
+   --input samplesheet.csv \
+   --outdir results \
+   --auto_binding_site true \
+   -profile docker
+```
+
+The pipeline will:
+1. Parse the receptor PDB for HETATM records (excluding waters, ions, buffers)
+2. Calculate the centroid of the co-crystallized ligand
+3. Determine box dimensions based on ligand extent + padding
+4. Use these coordinates for docking
+
+#### Specifying a specific ligand
+
+If the PDB contains multiple ligands, specify which one to use:
+
+```bash
+nextflow run nf-core/vina \
+   --input samplesheet.csv \
+   --outdir results \
+   --auto_binding_site true \
+   --ligand_id MK1 \
+   -profile docker
+```
+
+#### Adjusting box padding
+
+The default padding around the ligand is 5 Angstroms. Adjust if needed:
+
+```bash
+--box_padding 10  # Larger box for more flexibility
+```
+
+#### When to use auto binding site detection
+
+- **Use when**: Your receptor PDB comes from a co-crystal structure with a known ligand bound
+- **Don't use when**: You want to dock to a different site, or the PDB has no ligand
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

@@ -1,0 +1,10 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_ibuprofen,1,-6.8,0.0,0.0
+cox2_ibuprofen,2,-6.8,1.806,2.55
+cox2_ibuprofen,3,-6.8,1.786,2.791
+cox2_ibuprofen,4,-6.7,1.974,2.59
+cox2_ibuprofen,5,-6.5,0.952,1.712
+cox2_ibuprofen,6,-6.3,3.076,4.47
+cox2_ibuprofen,7,-6.3,2.81,6.075
+cox2_ibuprofen,8,-6.2,2.481,3.984
+cox2_ibuprofen,9,-6.2,2.739,4.79
