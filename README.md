@@ -69,7 +69,7 @@ flowchart LR
     end
 
     subgraph Prep["Preparation"]
-        D{{"BINDING_SITE"}}
+        D["BINDING_SITE"]
         E["RECEPTOR_PREP"]
         F["LIGAND_PREP"]
     end

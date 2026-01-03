@@ -10,7 +10,7 @@ flowchart LR
     end
 
     subgraph Optional
-        E{{"BINDING_SITE\n(Auto-detect)"}}
+        E{"BINDING_SITE\n(Auto-detect)"}
     end
 
     subgraph Preparation
