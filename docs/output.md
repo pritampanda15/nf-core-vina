@@ -1,4 +1,4 @@
-# nf-core/vina: Output
+# nf-core/moleculardocking: Output
 
 ## Introduction
 
@@ -92,7 +92,7 @@ The ligand preparation step uses Meeko (RDKit-based) to convert various ligand f
 
 - `docking/`
   - `*_docked.pdbqt`: Docked ligand poses in PDBQT format, ranked by binding affinity.
-  - `*_vina.log`: AutoDock Vina log file with docking scores and RMSD values.
+  - `*_docking.log`: AutoDock Vina log file with docking scores and RMSD values.
 
 </details>
 
@@ -203,9 +203,9 @@ results/
 │   └── sample2_ligand.pdbqt
 ├── docking/
 │   ├── sample1_docked.pdbqt
-│   ├── sample1_vina.log
+│   ├── sample1_docking.log
 │   ├── sample2_docked.pdbqt
-│   └── sample2_vina.log
+│   └── sample2_docking.log
 ├── scores/
 │   ├── sample1_scores.csv
 │   ├── sample1_summary.txt

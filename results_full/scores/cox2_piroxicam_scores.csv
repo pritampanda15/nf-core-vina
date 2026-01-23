@@ -1,0 +1,10 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_piroxicam,1,-8.0,0.0,0.0
+cox2_piroxicam,2,-7.4,2.823,7.22
+cox2_piroxicam,3,-7.4,1.925,7.149
+cox2_piroxicam,4,-7.3,17.718,20.093
+cox2_piroxicam,5,-7.3,18.203,19.986
+cox2_piroxicam,6,-7.0,2.058,2.792
+cox2_piroxicam,7,-6.9,9.764,10.983
+cox2_piroxicam,8,-6.9,18.215,20.574
+cox2_piroxicam,9,-6.9,2.062,2.66

@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/vina",
-    "homePage": "https://github.com/nf-core/vina",
+    "name": "nf-core/moleculardocking",
+    "homePage": "https://github.com/nf-core/moleculardocking",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

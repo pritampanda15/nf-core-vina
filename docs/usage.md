@@ -1,4 +1,4 @@
-# nf-core/vina: Usage
+# nf-core/moleculardocking: Usage
 
 ## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/vina/usage](https://nf-co.re/vina/usage)
 
@@ -6,7 +6,7 @@
 
 ## Introduction
 
-**nf-core/vina** is a high-throughput molecular docking pipeline using AutoDock Vina with modern ligand and receptor preparation tools. This pipeline is designed for structure-based virtual screening campaigns.
+**nf-core/moleculardocking** is a high-throughput molecular docking pipeline using AutoDock Vina with modern ligand and receptor preparation tools. This pipeline is designed for structure-based virtual screening campaigns.
 
 ### Important: Modern Toolchain Only
 
@@ -81,7 +81,7 @@ The docking box (search space) can be defined in two ways:
 Use command-line parameters to set the same docking box for all samples:
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input samplesheet.csv \
    --outdir results \
    --center_x 10.5 \
@@ -103,7 +103,7 @@ Per-sample values override global parameters.
 If your receptor PDB contains a co-crystallized ligand (from X-ray crystallography), the pipeline can automatically detect the binding site:
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input samplesheet.csv \
    --outdir results \
    --auto_binding_site true \
@@ -121,7 +121,7 @@ The pipeline will:
 If the PDB contains multiple ligands, specify which one to use:
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input samplesheet.csv \
    --outdir results \
    --auto_binding_site true \
@@ -147,7 +147,7 @@ The default padding around the ligand is 5 Angstroms. Adjust if needed:
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input ./samplesheet.csv \
    --outdir ./results \
    --center_x 10.5 \
@@ -161,7 +161,7 @@ This will launch the pipeline with the `docker` configuration profile. See below
 ### Example with all docking parameters
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input ./samplesheet.csv \
    --outdir ./results \
    --center_x 10.5 \
@@ -197,7 +197,7 @@ Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <
 The above pipeline run specified with a params file in yaml format:
 
 ```bash
-nextflow run nf-core/vina -profile docker -params-file params.yaml
+nextflow run nf-core/moleculardocking -profile docker -params-file params.yaml
 ```
 
 with:
@@ -277,7 +277,7 @@ Note: The `ligand` column can contain any placeholder file (e.g., `dummy.sdf`) i
 ### Running Virtual Screening
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input screening_samplesheet.csv \
    --outdir results \
    --screening_mode true \
@@ -342,7 +342,7 @@ Use this when you want a clean protein-only structure for blind docking.
 Use the provided SLURM profile:
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input samplesheet.csv \
    --outdir results \
    --center_x 10.5 \
@@ -354,7 +354,7 @@ nextflow run nf-core/vina \
 ### AWS Batch
 
 ```bash
-nextflow run nf-core/vina \
+nextflow run nf-core/moleculardocking \
    --input s3://bucket/samplesheet.csv \
    --outdir s3://bucket/results \
    --center_x 10.5 \
@@ -393,7 +393,7 @@ Available profiles:
 Specify this when restarting a pipeline. Nextflow will use cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously.
 
 ```bash
-nextflow run nf-core/vina -resume
+nextflow run nf-core/moleculardocking -resume
 ```
 
 ## Nextflow memory requirements

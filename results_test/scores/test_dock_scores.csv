@@ -1,0 +1,4 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+test_dock,1,-0.2,0.0,0.0
+test_dock,2,-0.2,2.346,2.346
+test_dock,3,-0.2,4.711,4.711

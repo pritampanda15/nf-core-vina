@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/vina/master/nextflow_schema.json",
-    "title": "nf-core/vina pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/nf-core/moleculardocking/master/nextflow_schema.json",
+    "title": "nf-core/moleculardocking pipeline parameters",
     "description": "High-throughput, containerized molecular docking using AutoDock Vina with modern ligand and receptor preparation",
     "type": "object",
     "$defs": {
@@ -20,7 +20,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the docking jobs.",
-                    "help_text": "You will need to create a samplesheet with information about receptor-ligand pairs before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with at minimum 3 columns (sample, receptor, ligand), and a header row. Optional columns include center_x, center_y, center_z, size_x, size_y, size_z for per-sample docking box definitions. See [usage docs](https://nf-co.re/vina/usage#samplesheet-input).",
+                    "help_text": "You will need to create a samplesheet with information about receptor-ligand pairs before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with at minimum 3 columns (sample, receptor, ligand), and a header row. Optional columns include center_x, center_y, center_z, size_x, size_y, size_z for per-sample docking box definitions. See [usage docs](https://nf-co.re/moleculardocking/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {

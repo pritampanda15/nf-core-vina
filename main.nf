@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    nf-core/vina
+    nf-core/moleculardocking
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/vina
-    Website: https://nf-co.re/vina
-    Slack  : https://nfcore.slack.com/channels/vina
+    Github : https://github.com/nf-core/moleculardocking
+    Website: https://nf-co.re/moleculardocking
+    Slack  : https://nfcore.slack.com/channels/moleculardocking
 ----------------------------------------------------------------------------------------
 */
 
@@ -15,9 +15,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { VINA  } from './workflows/vina'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_vina_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vina_pipeline'
+include { MOLECULARDOCKING  } from './workflows/moleculardocking'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_moleculardocking_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_moleculardocking_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,7 +28,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vina
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow NFCORE_VINA {
+workflow NFCORE_MOLECULARDOCKING {
 
     take:
     samplesheet // channel: [ val(meta), path(receptor), path(ligand) ]
@@ -38,16 +38,16 @@ workflow NFCORE_VINA {
     //
     // WORKFLOW: Run molecular docking pipeline
     //
-    VINA (
+    MOLECULARDOCKING (
         samplesheet
     )
 
     emit:
-    poses          = VINA.out.poses           // channel: [ val(meta), path(pdbqt) ]
-    scores         = VINA.out.scores          // channel: [ val(meta), path(csv) ]
-    all_scores     = VINA.out.all_scores      // channel: path(csv)
-    best_scores    = VINA.out.best_scores     // channel: path(csv)
-    multiqc_report = VINA.out.multiqc_report  // channel: /path/to/multiqc_report.html
+    poses          = MOLECULARDOCKING.out.poses           // channel: [ val(meta), path(pdbqt) ]
+    scores         = MOLECULARDOCKING.out.scores          // channel: [ val(meta), path(csv) ]
+    all_scores     = MOLECULARDOCKING.out.all_scores      // channel: path(csv)
+    best_scores    = MOLECULARDOCKING.out.best_scores     // channel: path(csv)
+    multiqc_report = MOLECULARDOCKING.out.multiqc_report  // channel: /path/to/multiqc_report.html
 }
 
 /*
@@ -77,7 +77,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_VINA (
+    NFCORE_MOLECULARDOCKING (
         PIPELINE_INITIALISATION.out.samplesheet
     )
 
@@ -91,7 +91,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCORE_VINA.out.multiqc_report
+        NFCORE_MOLECULARDOCKING.out.multiqc_report
     )
 }
 

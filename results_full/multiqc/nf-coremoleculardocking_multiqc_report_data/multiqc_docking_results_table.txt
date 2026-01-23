@@ -1,0 +1,11 @@
+Sample	Best Affinity (kcal/mol)	Total Poses
+cox2_aspirin	-6.4	9
+cox2_celecoxib	-11.6	4
+cox2_diclofenac	-7.4	9
+cox2_ibuprofen	-7.4	9
+cox2_indomethacin	-8.2	9
+cox2_ketoprofen	-8.4	9
+cox2_naproxen	-8.3	9
+cox2_piroxicam	-8.0	9
+esr_acetaminophen	-5.5	9
+hiv_caffeine	-5.5	9

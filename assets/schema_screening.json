@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/vina/master/assets/schema_screening.json",
-    "title": "nf-core/vina virtual screening samplesheet schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/moleculardocking/master/assets/schema_screening.json",
+    "title": "nf-core/moleculardocking virtual screening samplesheet schema",
     "description": "Schema for virtual screening mode - defines receptors with docking box coordinates",
     "type": "array",
     "items": {

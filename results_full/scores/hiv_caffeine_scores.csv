@@ -1,0 +1,10 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+hiv_caffeine,1,-5.5,0.0,0.0
+hiv_caffeine,2,-5.4,1.661,3.749
+hiv_caffeine,3,-5.4,8.628,10.677
+hiv_caffeine,4,-5.4,1.26,3.777
+hiv_caffeine,5,-5.3,1.959,4.951
+hiv_caffeine,6,-5.2,8.169,10.536
+hiv_caffeine,7,-5.2,2.942,5.222
+hiv_caffeine,8,-5.2,8.378,10.687
+hiv_caffeine,9,-5.2,3.0,4.899

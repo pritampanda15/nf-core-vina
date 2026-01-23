@@ -1,0 +1,4 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_aspirin,1,-0.0,0.0,0.0
+cox2_aspirin,2,-0.0,12.102,13.275
+cox2_aspirin,3,-0.0,10.839,11.852

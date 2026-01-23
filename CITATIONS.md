@@ -1,4 +1,4 @@
-# nf-core/vina: Citations
+# nf-core/moleculardocking: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 

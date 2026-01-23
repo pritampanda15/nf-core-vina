@@ -1,0 +1,10 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_indomethacin,1,-8.2,0.0,0.0
+cox2_indomethacin,2,-8.0,10.209,12.002
+cox2_indomethacin,3,-8.0,3.041,5.554
+cox2_indomethacin,4,-7.8,2.322,3.448
+cox2_indomethacin,5,-7.5,1.424,4.685
+cox2_indomethacin,6,-7.4,9.156,11.681
+cox2_indomethacin,7,-7.4,3.012,6.167
+cox2_indomethacin,8,-7.3,2.964,6.728
+cox2_indomethacin,9,-7.2,9.884,11.955

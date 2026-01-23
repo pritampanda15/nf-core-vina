@@ -6,7 +6,7 @@ lint: {}
 
 template:
   org: nf-core
-  name: vina
+  name: moleculardocking
   description: High-throughput, containerized molecular docking using AutoDock Vina
     with modern ligand and receptor preparation
   author: Pritam Kumar Panda

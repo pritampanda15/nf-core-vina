@@ -6,13 +6,13 @@
 // 2. Screening mode: Cross-product of receptors × ligands for virtual screening
 //
 
-include { RECEPTOR_PREP   } from '../../../modules/local/receptor_prep/main'
-include { LIGAND_PREP     } from '../../../modules/local/ligand_prep/main'
-include { VINA_DOCK       } from '../../../modules/local/vina_dock/main'
-include { VINA_PARSE      } from '../../../modules/local/vina_parse/main'
-include { SCORE_AGGREGATE } from '../../../modules/local/score_aggregate/main'
-include { SPLIT_SDF       } from '../../../modules/local/split_sdf/main'
-include { BINDING_SITE    } from '../../../modules/local/binding_site/main'
+include { RECEPTOR_PREP          } from '../../../modules/local/receptor_prep/main'
+include { LIGAND_PREP            } from '../../../modules/local/ligand_prep/main'
+include { MOLECULARDOCKING_DOCK  } from '../../../modules/local/moleculardocking_dock/main'
+include { MOLECULARDOCKING_PARSE } from '../../../modules/local/moleculardocking_parse/main'
+include { SCORE_AGGREGATE        } from '../../../modules/local/score_aggregate/main'
+include { SPLIT_SDF              } from '../../../modules/local/split_sdf/main'
+include { BINDING_SITE           } from '../../../modules/local/binding_site/main'
 
 workflow DOCKING {
 
@@ -155,25 +155,25 @@ workflow DOCKING {
     //
     // MODULE: Run AutoDock Vina docking
     //
-    VINA_DOCK ( ch_docking_input )
-    ch_versions = ch_versions.mix(VINA_DOCK.out.versions.first())
+    MOLECULARDOCKING_DOCK ( ch_docking_input )
+    ch_versions = ch_versions.mix(MOLECULARDOCKING_DOCK.out.versions.first())
 
     //
-    // MODULE: Parse Vina results
+    // MODULE: Parse docking results
     //
-    ch_parse_input = VINA_DOCK.out.log
-        .join(VINA_DOCK.out.poses)
+    ch_parse_input = MOLECULARDOCKING_DOCK.out.log
+        .join(MOLECULARDOCKING_DOCK.out.poses)
         .map { meta, log, poses ->
             [ meta, log, poses ]
         }
 
-    VINA_PARSE ( ch_parse_input )
-    ch_versions = ch_versions.mix(VINA_PARSE.out.versions.first())
+    MOLECULARDOCKING_PARSE ( ch_parse_input )
+    ch_versions = ch_versions.mix(MOLECULARDOCKING_PARSE.out.versions.first())
 
     //
     // MODULE: Aggregate all scores
     //
-    ch_all_scores = VINA_PARSE.out.scores
+    ch_all_scores = MOLECULARDOCKING_PARSE.out.scores
         .map { meta, scores -> scores }
         .collect()
 
@@ -181,14 +181,14 @@ workflow DOCKING {
     ch_versions = ch_versions.mix(SCORE_AGGREGATE.out.versions)
 
     emit:
-    receptor_pdbqt = RECEPTOR_PREP.out.pdbqt      // channel: [ val(meta), path(pdbqt) ]
-    ligand_pdbqt   = LIGAND_PREP.out.pdbqt        // channel: [ val(meta), path(pdbqt) ]
-    poses          = VINA_DOCK.out.poses          // channel: [ val(meta), path(pdbqt) ]
-    vina_logs      = VINA_DOCK.out.log            // channel: [ val(meta), path(log) ]
-    scores         = VINA_PARSE.out.scores        // channel: [ val(meta), path(csv) ]
-    summaries      = VINA_PARSE.out.summary       // channel: [ val(meta), path(txt) ]
-    all_scores     = SCORE_AGGREGATE.out.all_scores    // channel: path(csv)
-    best_scores    = SCORE_AGGREGATE.out.best_scores   // channel: path(csv)
-    multiqc_scores = SCORE_AGGREGATE.out.multiqc       // channel: path(csv)
-    versions       = ch_versions                       // channel: [ path(versions.yml) ]
+    receptor_pdbqt = RECEPTOR_PREP.out.pdbqt               // channel: [ val(meta), path(pdbqt) ]
+    ligand_pdbqt   = LIGAND_PREP.out.pdbqt                 // channel: [ val(meta), path(pdbqt) ]
+    poses          = MOLECULARDOCKING_DOCK.out.poses       // channel: [ val(meta), path(pdbqt) ]
+    docking_logs   = MOLECULARDOCKING_DOCK.out.log         // channel: [ val(meta), path(log) ]
+    scores         = MOLECULARDOCKING_PARSE.out.scores     // channel: [ val(meta), path(csv) ]
+    summaries      = MOLECULARDOCKING_PARSE.out.summary    // channel: [ val(meta), path(txt) ]
+    all_scores     = SCORE_AGGREGATE.out.all_scores        // channel: path(csv)
+    best_scores    = SCORE_AGGREGATE.out.best_scores       // channel: path(csv)
+    multiqc_scores = SCORE_AGGREGATE.out.multiqc           // channel: path(csv)
+    versions       = ch_versions                           // channel: [ path(versions.yml) ]
 }

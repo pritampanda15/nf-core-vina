@@ -1,0 +1,5 @@
+sample_id,mode,affinity_kcal_mol,rmsd_lower_bound,rmsd_upper_bound
+cox2_celecoxib,1,-11.6,0.0,0.0
+cox2_celecoxib,2,-9.3,3.529,5.784
+cox2_celecoxib,3,-9.2,4.958,6.342
+cox2_celecoxib,4,-8.8,4.896,7.029

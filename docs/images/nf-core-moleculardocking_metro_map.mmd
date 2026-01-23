@@ -1,0 +1,70 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#24B064', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1a8048', 'lineColor': '#666', 'secondaryColor': '#4a90d9', 'tertiaryColor': '#f5f5f5'}}}%%
+
+flowchart TB
+    subgraph Input["<b>INPUT</b>"]
+        samplesheet["Samplesheet<br/>(CSV)"]
+        receptor_pdb["Receptor<br/>(PDB)"]
+        ligand_file["Ligand<br/>(SDF/MOL2/SMILES)"]
+        library["Ligand Library<br/>(Multi-SDF)"]
+    end
+
+    subgraph BindingSite["<b>BINDING SITE DETECTION</b> (optional)"]
+        binding_site["BINDING_SITE<br/>Auto-detect box from<br/>co-crystallized ligand"]
+    end
+
+    subgraph Preparation["<b>MOLECULE PREPARATION</b>"]
+        receptor_prep["RECEPTOR_PREP<br/>Open Babel<br/>PDB → PDBQT"]
+        ligand_prep["LIGAND_PREP<br/>Meeko/RDKit<br/>SDF → PDBQT"]
+        split_sdf["SPLIT_SDF<br/>Split library into<br/>individual ligands"]
+    end
+
+    subgraph Docking["<b>MOLECULAR DOCKING</b>"]
+        moleculardocking_dock["MOLECULARDOCKING_DOCK<br/>AutoDock Vina<br/>"]
+    end
+
+    subgraph Analysis["<b>ANALYSIS & REPORTING</b>"]
+        moleculardocking_parse["MOLECULARDOCKING_PARSE<br/>Extract scores<br/>& poses"]
+        score_agg["SCORE_AGGREGATE<br/>Combine results<br/>Rank by affinity"]
+        multiqc["MULTIQC<br/>HTML Report"]
+    end
+
+    subgraph Output["<b>OUTPUT</b>"]
+        pdbqt_out["Docked Poses<br/>(PDBQT)"]
+        scores_out["Score Tables<br/>(CSV)"]
+        report_out["MultiQC Report<br/>(HTML)"]
+    end
+
+    %% Standard mode flow
+    samplesheet --> receptor_pdb
+    samplesheet --> ligand_file
+    receptor_pdb --> binding_site
+    binding_site --> receptor_prep
+    receptor_pdb --> receptor_prep
+    ligand_file --> ligand_prep
+
+    %% Virtual screening mode
+    library --> split_sdf
+    split_sdf --> ligand_prep
+
+    %% Docking
+    receptor_prep --> moleculardocking_dock
+    ligand_prep --> moleculardocking_dock
+
+    %% Analysis
+    moleculardocking_dock --> moleculardocking_parse
+    moleculardocking_dock --> pdbqt_out
+    moleculardocking_parse --> score_agg
+    moleculardocking_parse --> scores_out
+    score_agg --> multiqc
+    multiqc --> report_out
+
+    %% Styling
+    classDef inputClass fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef processClass fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef optionalClass fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,stroke-dasharray: 5 5
+    classDef outputClass fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class samplesheet,receptor_pdb,ligand_file,library inputClass
+    class receptor_prep,ligand_prep,split_sdf,moleculardocking_dock,moleculardocking_parse,score_agg,multiqc processClass
+    class binding_site optionalClass
+    class pdbqt_out,scores_out,report_out outputClass

@@ -1,0 +1,14 @@
+LIGAND_PREP:
+  meeko: 0.6.0-alpha.2
+  rdkit: 2023.09.4
+MOLECULARDOCKING_DOCK:
+  autodock-vina: 1.1.2
+MOLECULARDOCKING_PARSE:
+  python: 3.11.10
+RECEPTOR_PREP:
+  openbabel: No input file or format spec or possibly a misplaced option.
+SCORE_AGGREGATE:
+  python: 3.11.10
+Workflow:
+    nf-core/moleculardocking: v1.0.0dev
+    Nextflow: 25.10.2
