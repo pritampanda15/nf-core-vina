@@ -5,6 +5,10 @@
 // 1. Standard mode: Each samplesheet row is one docking job
 // 2. Screening mode: Cross-product of receptors × ligands for virtual screening
 //
+// Receptor input supports:
+// - Local PDB file paths (e.g., /path/to/receptor.pdb)
+// - PDB IDs for automatic download from RCSB (e.g., 5KIR)
+//
 
 include { RECEPTOR_PREP          } from '../../../modules/local/receptor_prep/main'
 include { LIGAND_PREP            } from '../../../modules/local/ligand_prep/main'
@@ -13,6 +17,14 @@ include { MOLECULARDOCKING_PARSE } from '../../../modules/local/moleculardocking
 include { SCORE_AGGREGATE        } from '../../../modules/local/score_aggregate/main'
 include { SPLIT_SDF              } from '../../../modules/local/split_sdf/main'
 include { BINDING_SITE           } from '../../../modules/local/binding_site/main'
+include { PDB_DOWNLOAD           } from '../../../modules/local/pdb_download/main'
+
+//
+// Function to check if a string is a PDB ID (4-character alphanumeric)
+//
+def isPdbId(receptor) {
+    return receptor ==~ /^[a-zA-Z0-9]{4}$/
+}
 
 workflow DOCKING {
 
@@ -87,6 +99,30 @@ workflow DOCKING {
         // Each samplesheet row is one docking job
         //
 
+        //
+        // Handle PDB ID vs file path for receptors
+        // PDB IDs (4-character alphanumeric) are downloaded from RCSB
+        //
+        ch_pdb_ids = ch_samplesheet
+            .filter { meta, receptor, ligand -> isPdbId(receptor.toString()) }
+            .map { meta, receptor, ligand -> [ meta, receptor.toString(), ligand ] }
+
+        ch_local_files = ch_samplesheet
+            .filter { meta, receptor, ligand -> !isPdbId(receptor.toString()) }
+
+        // Download PDB structures for PDB IDs
+        ch_for_download = ch_pdb_ids.map { meta, pdb_id, ligand -> [ meta, pdb_id ] }
+
+        PDB_DOWNLOAD ( ch_for_download )
+        ch_versions = ch_versions.mix(PDB_DOWNLOAD.out.versions.first().ifEmpty([]))
+
+        // Merge downloaded PDBs with local files
+        ch_downloaded = PDB_DOWNLOAD.out.pdb
+            .join(ch_pdb_ids.map { meta, pdb_id, ligand -> [ meta, ligand ] })
+            .map { meta, pdb_file, ligand -> [ meta, pdb_file, ligand ] }
+
+        ch_samplesheet_with_receptors = ch_local_files.mix(ch_downloaded)
+
         // Check if auto binding site detection is needed
         if (params.auto_binding_site) {
             //
@@ -95,12 +131,12 @@ workflow DOCKING {
             //
 
             // Separate samples: those with coordinates vs those needing detection
-            ch_with_coords = ch_samplesheet
+            ch_with_coords = ch_samplesheet_with_receptors
                 .filter { meta, receptor, ligand ->
                     meta.center_x != null && meta.center_y != null && meta.center_z != null
                 }
 
-            ch_need_detection = ch_samplesheet
+            ch_need_detection = ch_samplesheet_with_receptors
                 .filter { meta, receptor, ligand ->
                     meta.center_x == null || meta.center_y == null || meta.center_z == null
                 }
@@ -131,7 +167,7 @@ workflow DOCKING {
             ch_samplesheet_updated = ch_with_coords.mix(ch_detected)
 
         } else {
-            ch_samplesheet_updated = ch_samplesheet
+            ch_samplesheet_updated = ch_samplesheet_with_receptors
         }
 
         // Prepare receptors

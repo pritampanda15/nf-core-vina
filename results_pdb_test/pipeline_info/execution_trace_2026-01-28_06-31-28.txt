@@ -1,0 +1,2 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	cf/a11581	37174	NFCORE_MOLECULARDOCKING:MOLECULARDOCKING:DOCKING:PDB_DOWNLOAD (cox2_aspirin)	FAILED	125	2026-01-28 06:31:33.751	632ms	536ms	-	-	-	-	-

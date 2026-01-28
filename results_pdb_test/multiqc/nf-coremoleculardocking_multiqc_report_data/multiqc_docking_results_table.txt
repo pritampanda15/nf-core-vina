@@ -1,0 +1,2 @@
+Sample	Best Affinity (kcal/mol)	Total Poses
+cox2_aspirin	-6.3	9

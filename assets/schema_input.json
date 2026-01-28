@@ -15,10 +15,8 @@
             },
             "receptor": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.(pdb|PDB)$",
-                "errorMessage": "Receptor file must be provided, cannot contain spaces, and must have extension '.pdb'"
+                "pattern": "^([a-zA-Z0-9]{4}|([\\S\\s]*\\/)?[^\\s\\/]+\\.(pdb|PDB))$",
+                "errorMessage": "Receptor must be either a 4-character PDB ID (e.g., '5KIR') or a file path with '.pdb' extension"
             },
             "ligand": {
                 "type": "string",

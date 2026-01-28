@@ -29,17 +29,35 @@ You will need to create a samplesheet with information about the receptor-ligand
 
 The samplesheet is a CSV file with the following columns:
 
-| Column     | Required | Description                                      |
-|------------|----------|--------------------------------------------------|
-| `sample`   | Yes      | Unique sample identifier (no spaces)              |
-| `receptor` | Yes      | Path to receptor PDB file                         |
-| `ligand`   | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)   |
-| `center_x` | No       | X coordinate of docking box center (Angstroms)    |
-| `center_y` | No       | Y coordinate of docking box center (Angstroms)    |
-| `center_z` | No       | Z coordinate of docking box center (Angstroms)    |
-| `size_x`   | No       | Box size in X dimension (default: 20 Angstroms)   |
-| `size_y`   | No       | Box size in Y dimension (default: 20 Angstroms)   |
-| `size_z`   | No       | Box size in Z dimension (default: 20 Angstroms)   |
+| Column     | Required | Description                                             |
+|------------|----------|---------------------------------------------------------|
+| `sample`   | Yes      | Unique sample identifier (no spaces)                    |
+| `receptor` | Yes      | Path to receptor PDB file **OR** 4-character PDB ID     |
+| `ligand`   | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)         |
+| `center_x` | No       | X coordinate of docking box center (Angstroms)          |
+| `center_y` | No       | Y coordinate of docking box center (Angstroms)          |
+| `center_z` | No       | Z coordinate of docking box center (Angstroms)          |
+| `size_x`   | No       | Box size in X dimension (default: 20 Angstroms)         |
+| `size_y`   | No       | Box size in Y dimension (default: 20 Angstroms)         |
+| `size_z`   | No       | Box size in Z dimension (default: 20 Angstroms)         |
+
+### Automatic PDB Download
+
+Instead of providing local PDB files, you can specify a 4-character PDB ID and the pipeline will automatically download the structure from the RCSB Protein Data Bank:
+
+```csv title="samplesheet_with_pdb_ids.csv"
+sample,receptor,ligand,center_x,center_y,center_z
+cox2_aspirin,5KIR,/path/to/aspirin.smi,23.2,1.3,34.3
+hiv_inhibitor,1HSG,/path/to/inhibitor.sdf,16.0,25.0,4.0
+esr_estradiol,1ERE,/path/to/estradiol.mol2,31.1,45.3,89.2
+```
+
+The pipeline auto-detects whether the `receptor` column contains:
+
+- **PDB ID** (4 alphanumeric characters like `5KIR`, `1HSG`) → Downloads from RCSB
+- **File path** (e.g., `/path/to/receptor.pdb`) → Uses local file
+
+You can mix PDB IDs and local files in the same samplesheet.
 
 ### Minimal samplesheet
 

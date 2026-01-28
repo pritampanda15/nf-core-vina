@@ -1,0 +1,129 @@
+<!--
+  ~ Copyright 2013-2024, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'primaryColor': '#B6ECE2',
+      'primaryTextColor': '#160F26',
+      'primaryBorderColor': '#065647',
+      'lineColor': '#545555',
+      'clusterBkg': '#BABCBD22',
+      'clusterBorder': '#DDDEDE',
+      'fontFamily': 'arial'
+    }
+  }
+}%%
+flowchart TB
+    subgraph " "
+    v2["Channel.fromList"]
+    v45[" "]
+    v55["Channel.of"]
+    v59["Channel.fromPath"]
+    v62["ch_workflow_summary"]
+    v66["ch_methods_description"]
+    v73["replace_names"]
+    v74["sample_names"]
+    end
+    subgraph "NFCORE_MOLECULARDOCKING [NFCORE_MOLECULARDOCKING]"
+    subgraph "NFCORE_MOLECULARDOCKING:MOLECULARDOCKING [MOLECULARDOCKING]"
+    subgraph "NFCORE_MOLECULARDOCKING:MOLECULARDOCKING:DOCKING [DOCKING]"
+    v10(["PDB_DOWNLOAD"])
+    v19(["RECEPTOR_PREP"])
+    v23(["LIGAND_PREP"])
+    v28(["MOLECULARDOCKING_DOCK"])
+    v33(["MOLECULARDOCKING_PARSE"])
+    v39(["SCORE_AGGREGATE"])
+    v6(( ))
+    v11(( ))
+    v26(( ))
+    v31(( ))
+    v37(( ))
+    end
+    v75(["MULTIQC"])
+    v43(( ))
+    v70(( ))
+    v71(( ))
+    v72(( ))
+    v79(( ))
+    end
+    end
+    subgraph " "
+    v34["summaries"]
+    v40["best_scores"]
+    v41["all_scores"]
+    v76[" "]
+    v77[" "]
+    v78[" "]
+    v81[" "]
+    end
+    subgraph "PIPELINE_COMPLETION [PIPELINE_COMPLETION]"
+    v80(( ))
+    end
+    v2 --> v6
+    v6 --> v10
+    v10 --> v6
+    v10 --> v11
+    v6 --> v19
+    v19 --> v11
+    v19 --> v26
+    v6 --> v23
+    v23 --> v11
+    v23 --> v26
+    v26 --> v28
+    v28 --> v11
+    v28 --> v31
+    v31 --> v33
+    v33 --> v34
+    v33 --> v11
+    v33 --> v37
+    v37 --> v39
+    v39 --> v41
+    v39 --> v40
+    v39 --> v11
+    v39 --> v43
+    v45 --> v43
+    v55 --> v43
+    v59 --> v70
+    v62 --> v43
+    v66 --> v43
+    v73 --> v75
+    v74 --> v75
+    v43 --> v75
+    v70 --> v75
+    v71 --> v75
+    v72 --> v75
+    v75 --> v78
+    v75 --> v77
+    v75 --> v76
+    v75 --> v79
+    v80 --> v81
+    v11 --> v43
+    v79 --> v80
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>
