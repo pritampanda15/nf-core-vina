@@ -78,9 +78,35 @@ def getWorkflowVersion() {
 // Get software versions for pipeline
 //
 def processVersionsFromYAML(yaml_file) {
+    // Handle null or empty input
+    if (yaml_file == null || yaml_file.toString().trim().isEmpty()) {
+        return ""
+    }
+
     def yaml = new org.yaml.snakeyaml.Yaml()
-    def versions = yaml.load(yaml_file).collectEntries { k, v -> [k.tokenize(':')[-1], v] }
-    return yaml.dumpAsMap(versions).trim()
+    def yaml_content = yaml_file
+
+    // If it's a Path/File, read its content
+    if (yaml_file instanceof java.nio.file.Path || yaml_file instanceof File) {
+        yaml_content = yaml_file.text
+    }
+
+    // Handle empty content
+    if (yaml_content == null || yaml_content.toString().trim().isEmpty()) {
+        return ""
+    }
+
+    try {
+        def versions = yaml.load(yaml_content)
+        if (versions == null) {
+            return ""
+        }
+        versions = versions.collectEntries { k, v -> [k.tokenize(':')[-1], v] }
+        return yaml.dumpAsMap(versions).trim()
+    } catch (Exception e) {
+        log.warn("Failed to parse versions YAML: ${e.message}")
+        return ""
+    }
 }
 
 //

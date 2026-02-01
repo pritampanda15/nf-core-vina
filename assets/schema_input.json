@@ -54,6 +54,12 @@
                 "type": "number",
                 "errorMessage": "Box size Z must be a number",
                 "meta": ["size_z"]
+            },
+            "binding_ligand": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9]{1,4}$",
+                "errorMessage": "Binding ligand must be a 1-4 character residue code (e.g., 'RCX', 'ATP')",
+                "meta": ["ligand_id"]
             }
         },
         "required": ["sample", "receptor", "ligand"]

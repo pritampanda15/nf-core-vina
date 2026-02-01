@@ -28,11 +28,12 @@
 ### Key Features
 
 - **Modern toolchain only** - No legacy Python 2.7 dependencies or AutoDockTools
+- **Automatic PDB download** - Provide 4-character PDB IDs and structures are downloaded from RCSB automatically
+- **Auto binding site detection** - Detect docking box coordinates from co-crystallized ligands in PDB structures
 - **Receptor preparation** using Open Babel (PDB to PDBQT with polar hydrogens and Gasteiger charges)
 - **Ligand preparation** using Meeko/RDKit (SDF/MOL2/SMILES to PDBQT)
 - **Virtual screening mode** - Screen thousands of ligands against multiple receptors efficiently
 - **Multi-molecule SDF support** - Automatically split and process compound libraries
-- **Auto binding site detection** - Automatically detect docking box from co-crystallized ligands in PDB
 - **Docking** with AutoDock Vina >= 1.2
 - **Chemically correct** - Proper protonation at specified pH, Gasteiger charges, rotatable bond handling
 - **Fully containerized** - Docker, Singularity, Podman, Conda support
@@ -108,32 +109,17 @@ flowchart LR
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-First, prepare a samplesheet with your receptor-ligand pairs:
+### Quick Start
 
-`samplesheet.csv`:
+Prepare a samplesheet with your receptor-ligand pairs:
 
 ```csv
 sample,receptor,ligand,center_x,center_y,center_z
 dock_1,/path/to/receptor.pdb,/path/to/ligand1.sdf,10.5,20.3,15.0
 dock_2,/path/to/receptor.pdb,/path/to/ligand2.mol2,10.5,20.3,15.0
-dock_3,/path/to/receptor.pdb,/path/to/ligand3.smi,10.5,20.3,15.0
 ```
 
-Each row represents a docking job with a receptor-ligand pair and optional docking box coordinates.
-
-Now, you can run the pipeline using:
-
-```bash
-nextflow run nf-core/moleculardocking \
-   -profile docker \
-   --input samplesheet.csv \
-   --outdir results \
-   --center_x 10.5 \
-   --center_y 20.3 \
-   --center_z 15.0
-```
-
-Or with per-sample box coordinates defined in the samplesheet:
+Run the pipeline:
 
 ```bash
 nextflow run nf-core/moleculardocking \
@@ -141,6 +127,65 @@ nextflow run nf-core/moleculardocking \
    --input samplesheet.csv \
    --outdir results
 ```
+
+### Automatic PDB Download
+
+Instead of providing local PDB files, you can specify **4-character PDB IDs** and the pipeline will automatically download structures from the [RCSB Protein Data Bank](https://www.rcsb.org/):
+
+```csv
+sample,receptor,ligand,center_x,center_y,center_z
+cox2_aspirin,5KIR,/path/to/aspirin.smi,23.2,1.3,34.3
+hiv_inhibitor,1HSG,/path/to/inhibitor.sdf,16.0,25.0,4.0
+```
+
+The pipeline auto-detects whether the `receptor` column contains a PDB ID or file path.
+
+### Automatic Binding Site Detection
+
+When you don't know the binding site coordinates, use `--auto_binding_site true` to automatically detect them from co-crystallized ligands in the PDB structure:
+
+```csv
+sample,receptor,ligand,binding_ligand
+cox2_aspirin,5KIR,/path/to/aspirin.smi,RCX
+hiv_inhibitor,1HSG,/path/to/inhibitor.sdf,MK1
+```
+
+The `binding_ligand` column specifies which co-crystallized ligand (3-letter code) to use for defining the binding site. Find ligand codes at [RCSB PDB](https://www.rcsb.org/) under "Small Molecules".
+
+```bash
+nextflow run nf-core/moleculardocking \
+   -profile docker \
+   --input samplesheet.csv \
+   --outdir results \
+   --auto_binding_site true \
+   --remove_heteroatoms true
+```
+
+> [!TIP]
+> Use `--remove_heteroatoms true` when downloading PDB structures to remove co-crystallized ligands before receptor preparation. This prevents Open Babel conversion errors.
+
+### Samplesheet Columns
+
+| Column           | Required | Description                                                        |
+|------------------|----------|--------------------------------------------------------------------|
+| `sample`         | Yes      | Unique sample identifier                                           |
+| `receptor`       | Yes      | Path to PDB file **OR** 4-character PDB ID (e.g., `5KIR`)          |
+| `ligand`         | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)                    |
+| `center_x/y/z`   | No       | Docking box center coordinates (Angstroms)                         |
+| `size_x/y/z`     | No       | Docking box dimensions (default: 20 Angstroms)                     |
+| `binding_ligand` | No       | 3-letter code of co-crystallized ligand for binding site detection |
+
+### Key Parameters
+
+| Parameter              | Default | Description                                              |
+|------------------------|---------|----------------------------------------------------------|
+| `--auto_binding_site`  | `false` | Auto-detect binding site from co-crystallized ligand     |
+| `--remove_heteroatoms` | `false` | Remove all heteroatoms from receptor before preparation  |
+| `--remove_water`       | `true`  | Remove water molecules from receptor                     |
+| `--exhaustiveness`     | `8`     | Docking exhaustiveness (higher = more thorough, slower)  |
+| `--num_modes`          | `9`     | Maximum number of binding poses to generate              |
+| `--energy_range`       | `3`     | Energy range for poses (kcal/mol from best)              |
+| `--box_padding`        | `5`     | Padding around detected ligand for docking box (Å)       |
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
@@ -153,16 +198,17 @@ The pipeline generates the following outputs:
 
 ```
 results/
+├── pdb/                    # Downloaded PDB files (when using PDB IDs)
 ├── binding_site/           # Auto-detected binding site coordinates (if enabled)
 ├── receptor_prep/          # Prepared receptor PDBQT files
 ├── ligand_prep/            # Prepared ligand PDBQT files
 ├── docking/                # Docked poses and Vina logs
-├── scores/                 # Per-sample score CSVs
+├── scores/                 # Per-sample score CSVs and summaries
 ├── results/                # Aggregated results
 │   ├── docking_results_all.csv       # All poses from all samples
-│   └── docking_results_summary.csv   # Best pose per sample
-├── multiqc/                # MultiQC HTML report
-└── pipeline_info/          # Execution reports
+│   └── docking_results_summary.csv   # Best pose per sample (ranked by affinity)
+├── multiqc/                # MultiQC HTML report with docking results table
+└── pipeline_info/          # Execution reports and parameters
 ```
 
 For more details about the output files and reports, please refer to the [output documentation](https://nf-co.re/moleculardocking/output).

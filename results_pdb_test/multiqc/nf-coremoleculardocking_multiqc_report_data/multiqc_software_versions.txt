@@ -1,8 +1,0 @@
-Sample	meeko	rdkit	autodock-vina	python	download_tool	openbabel	nf-core/moleculardocking	Nextflow
-LIGAND_PREP	0.6.0-alpha.2	2023.09.4						
-MOLECULARDOCKING_DOCK			1.1.2					
-MOLECULARDOCKING_PARSE				3.11.10				
-PDB_DOWNLOAD					wget			
-RECEPTOR_PREP						No input file or format spec or possibly a misplaced option.		
-SCORE_AGGREGATE				3.11.10				
-Workflow							v1.0.0dev	25.10.2

@@ -29,17 +29,18 @@ You will need to create a samplesheet with information about the receptor-ligand
 
 The samplesheet is a CSV file with the following columns:
 
-| Column     | Required | Description                                             |
-|------------|----------|---------------------------------------------------------|
-| `sample`   | Yes      | Unique sample identifier (no spaces)                    |
-| `receptor` | Yes      | Path to receptor PDB file **OR** 4-character PDB ID     |
-| `ligand`   | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)         |
-| `center_x` | No       | X coordinate of docking box center (Angstroms)          |
-| `center_y` | No       | Y coordinate of docking box center (Angstroms)          |
-| `center_z` | No       | Z coordinate of docking box center (Angstroms)          |
-| `size_x`   | No       | Box size in X dimension (default: 20 Angstroms)         |
-| `size_y`   | No       | Box size in Y dimension (default: 20 Angstroms)         |
-| `size_z`   | No       | Box size in Z dimension (default: 20 Angstroms)         |
+| Column           | Required | Description                                                        |
+|------------------|----------|--------------------------------------------------------------------|
+| `sample`         | Yes      | Unique sample identifier (no spaces)                               |
+| `receptor`       | Yes      | Path to receptor PDB file **OR** 4-character PDB ID                |
+| `ligand`         | Yes      | Path to ligand file (SDF, MOL2, PDB, or SMILES)                    |
+| `center_x`       | No       | X coordinate of docking box center (Angstroms)                     |
+| `center_y`       | No       | Y coordinate of docking box center (Angstroms)                     |
+| `center_z`       | No       | Z coordinate of docking box center (Angstroms)                     |
+| `size_x`         | No       | Box size in X dimension (default: 20 Angstroms)                    |
+| `size_y`         | No       | Box size in Y dimension (default: 20 Angstroms)                    |
+| `size_z`         | No       | Box size in Z dimension (default: 20 Angstroms)                    |
+| `binding_ligand` | No       | 3-letter code of co-crystallized ligand for binding site detection |
 
 ### Automatic PDB Download
 
@@ -58,6 +59,27 @@ The pipeline auto-detects whether the `receptor` column contains:
 - **File path** (e.g., `/path/to/receptor.pdb`) → Uses local file
 
 You can mix PDB IDs and local files in the same samplesheet.
+
+### Automatic Binding Site Detection
+
+When using `--auto_binding_site true`, the pipeline can automatically detect binding site coordinates from co-crystallized ligands in the PDB structure. By default, it uses the largest heteroatom group found.
+
+To specify which ligand to use for binding site detection, add the `binding_ligand` column with the 3-letter residue code:
+
+```csv title="samplesheet_auto_binding.csv"
+sample,receptor,ligand,binding_ligand
+cox2_aspirin,5KIR,/path/to/aspirin.smi,RCX
+hiv_inhibitor,1HSG,/path/to/inhibitor.sdf,MK1
+kinase_compound,3EQM,/path/to/compound.mol2,STI
+```
+
+Run with:
+
+```bash
+nextflow run nf-core/moleculardocking --input samplesheet.csv --auto_binding_site true --outdir results
+```
+
+> **Tip**: To find available ligands in a PDB structure, visit the [RCSB PDB](https://www.rcsb.org/) and search for your PDB ID. The "Small Molecules" section lists all heteroatoms with their 3-letter codes.
 
 ### Minimal samplesheet
 

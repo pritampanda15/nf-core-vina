@@ -103,25 +103,36 @@ workflow DOCKING {
         // Handle PDB ID vs file path for receptors
         // PDB IDs (4-character alphanumeric) are downloaded from RCSB
         //
-        ch_pdb_ids = ch_samplesheet
-            .filter { meta, receptor, ligand -> isPdbId(receptor.toString()) }
-            .map { meta, receptor, ligand -> [ meta, receptor.toString(), ligand ] }
 
-        ch_local_files = ch_samplesheet
-            .filter { meta, receptor, ligand -> !isPdbId(receptor.toString()) }
+        // Branch the samplesheet to handle PDB IDs vs local files
+        ch_samplesheet
+            .branch {
+                meta, receptor, ligand ->
+                    pdb_id: isPdbId(receptor.toString())
+                    local_file: true
+            }
+            .set { ch_receptor_type }
+
+        // Multicast PDB ID channel for download and join
+        ch_receptor_type.pdb_id
+            .map { meta, receptor, ligand -> [ meta, receptor.toString(), ligand ] }
+            .multiMap { meta, pdb_id, ligand ->
+                for_download: [ meta, pdb_id ]
+                for_join: [ meta, ligand ]
+            }
+            .set { ch_pdb_ids_multi }
 
         // Download PDB structures for PDB IDs
-        ch_for_download = ch_pdb_ids.map { meta, pdb_id, ligand -> [ meta, pdb_id ] }
-
-        PDB_DOWNLOAD ( ch_for_download )
+        PDB_DOWNLOAD ( ch_pdb_ids_multi.for_download )
         ch_versions = ch_versions.mix(PDB_DOWNLOAD.out.versions.first().ifEmpty([]))
 
-        // Merge downloaded PDBs with local files
+        // Merge downloaded PDBs with ligand info
         ch_downloaded = PDB_DOWNLOAD.out.pdb
-            .join(ch_pdb_ids.map { meta, pdb_id, ligand -> [ meta, ligand ] })
+            .join(ch_pdb_ids_multi.for_join)
             .map { meta, pdb_file, ligand -> [ meta, pdb_file, ligand ] }
 
-        ch_samplesheet_with_receptors = ch_local_files.mix(ch_downloaded)
+        // Combine local files with downloaded PDBs
+        ch_samplesheet_with_receptors = ch_receptor_type.local_file.mix(ch_downloaded)
 
         // Check if auto binding site detection is needed
         if (params.auto_binding_site) {
@@ -130,26 +141,41 @@ workflow DOCKING {
             // Detect binding site from co-crystallized ligand in PDB
             //
 
-            // Separate samples: those with coordinates vs those needing detection
-            ch_with_coords = ch_samplesheet_with_receptors
-                .filter { meta, receptor, ligand ->
-                    meta.center_x != null && meta.center_y != null && meta.center_z != null
+            // Branch samples into those with and without coordinates
+            // Note: nf-schema sets missing optional fields to empty lists [], not null
+            // So we need to check if the value is a number (not null and not empty list)
+            ch_samplesheet_with_receptors
+                .branch {
+                    meta, receptor, ligand ->
+                        def hasCoords = (meta.center_x instanceof Number) &&
+                                        (meta.center_y instanceof Number) &&
+                                        (meta.center_z instanceof Number)
+                        has_coords: hasCoords
+                        needs_detection: !hasCoords
                 }
+                .set { ch_branched }
 
-            ch_need_detection = ch_samplesheet_with_receptors
-                .filter { meta, receptor, ligand ->
-                    meta.center_x == null || meta.center_y == null || meta.center_z == null
+            // Samples that already have coordinates - pass through directly
+            ch_with_coords = ch_branched.has_coords
+
+            // For samples needing detection, use multiMap to create both channels at once
+            // This avoids double consumption of the needs_detection channel
+            ch_branched.needs_detection
+                .multiMap { meta, receptor, ligand ->
+                    for_binding_site: [ meta, receptor ]
+                    for_join: [ meta.id, meta, receptor, ligand ]
                 }
+                .set { ch_needs_detection_multi }
 
-            // Run binding site detection on samples that need it
-            ch_for_detection = ch_need_detection.map { meta, receptor, ligand -> [ meta, receptor ] }
-            BINDING_SITE ( ch_for_detection )
+            // Run binding site detection
+            BINDING_SITE ( ch_needs_detection_multi.for_binding_site )
             ch_versions = ch_versions.mix(BINDING_SITE.out.versions.first().ifEmpty([]))
 
-            // Parse binding site JSON and update meta
+            // Join binding site results with original sample data using meta.id as key
             ch_detected = BINDING_SITE.out.binding_site
-                .join(ch_need_detection.map { meta, receptor, ligand -> [ meta, receptor, ligand ] })
-                .map { meta, json_file, receptor, ligand ->
+                .map { meta, json_file -> [ meta.id, json_file ] }
+                .join(ch_needs_detection_multi.for_join)
+                .map { id, json_file, meta, receptor, ligand ->
                     def json = new groovy.json.JsonSlurper().parse(json_file)
                     def updated_meta = meta + [
                         center_x: json.center_x,
